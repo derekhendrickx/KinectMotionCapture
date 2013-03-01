@@ -2,13 +2,12 @@
 
 #include "kinectmotioncapture.h"
 
-KinectThread::KinectThread(QObject *parent)
-	: QThread(parent)
+KinectThread::KinectThread()
 {
 	m_hNextVideoFrameEvent = NULL;
 	m_videoStream = NULL;
 	m_hNextSkeletonEvent = NULL;
-	m_bRunning = true;
+	m_bRunning = false;
 }
 
 KinectThread::~KinectThread()
@@ -16,19 +15,17 @@ KinectThread::~KinectThread()
 
 }
 
-void KinectThread::stop()
+void KinectThread::Shutdown()
 {
-	m_bRunning = false;
+	m_bRunning = true;
 }
 
-void KinectThread::run()
+void KinectThread::process()
 {
 	HANDLE events[2] = {m_hNextVideoFrameEvent, m_hNextSkeletonEvent};
-
-	m_bRunning = true;
 	int event_idx;
 
-	while(m_bRunning)
+	while(!m_bRunning)
 	{
 		// [rad] Wait for events, (not necessarily all) and time out is 100 msec.
 		event_idx = WaitForMultipleObjects((sizeof(events) / sizeof(events[0])), events, FALSE, 100);
@@ -45,8 +42,10 @@ void KinectThread::run()
 			emit EventSkeleton();
 		}
 
-		usleep(15);
+		Sleep(15);
 	}
+
+	emit finished();
 }
 
 void KinectThread::VideoHandles(HANDLE stream, HANDLE frame)

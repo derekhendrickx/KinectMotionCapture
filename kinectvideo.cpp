@@ -13,6 +13,7 @@ KinectVideo::KinectVideo(QObject *parent, QLabel *label, int width, int height)
 KinectVideo::~KinectVideo()
 {
 	delete[] m_pVideoBuffer;
+	m_pVideoBuffer = 0;
 }
 
 void KinectVideo::DrawVideo(const unsigned char *videoData)

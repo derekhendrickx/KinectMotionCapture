@@ -1,28 +1,29 @@
 #ifndef KINECTTHREAD_H
 #define KINECTTHREAD_H
 
-#include <QThread>
+#include <QObject>
 
 #include <windows.h>
 #include <NuiApi.h>
 
-class KinectThread : public QThread
+class KinectThread : public QObject
 {
 	Q_OBJECT
 
 public:
-	KinectThread(QObject *parent);
+	KinectThread();
 	virtual ~KinectThread();
+
+	void Shutdown();
 
 	void VideoHandles(HANDLE stream, HANDLE frame);
 	void SkeletonHandles(HANDLE frame);
 
-	void stop();
-
-protected:
-	void run();
+public slots:
+	void process();
 
 signals:
+	void finished();
 	void EventFrameColor();
 	void EventSkeleton();
 

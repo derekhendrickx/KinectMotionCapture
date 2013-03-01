@@ -15,15 +15,15 @@ KinectMotionCapture::KinectMotionCapture(QWidget *parent)
 	m_pKinectVideo = NULL;
 	m_pKinectSkeleton = NULL;
 	m_pKinectThread = NULL;
+	m_pThread = NULL;
 }
 
 KinectMotionCapture::~KinectMotionCapture()
 {
-	m_pKinectThread->stop();
-
 	delete m_pKinectVideo;
 	delete m_pKinectSkeleton;
 	delete m_pKinectThread;
+	delete m_pThread;
 }
 
 void KinectMotionCapture::Initialize()
@@ -54,15 +54,22 @@ void KinectMotionCapture::Initialize()
 	m_bSkeletonTracking = true;
 	m_pKinectSkeleton = new KinectSkeleton(this, ui.skeleton, 320, 240);
 
-	m_pKinectThread = new KinectThread(this);
-
-	QObject::connect(m_pKinectThread, SIGNAL(EventFrameColor()), this, SLOT(EventFrameColor()));
-	QObject::connect(m_pKinectThread, SIGNAL(EventSkeleton()), this, SLOT(EventSkeleton()));
+	m_pThread = new QThread;
+	m_pKinectThread = new KinectThread();
 
 	m_pKinectThread->VideoHandles(m_videoStream, m_hNextVideoFrameEvent);
 	m_pKinectThread->SkeletonHandles(m_hNextSkeletonEvent);
 
-	m_pKinectThread->start();
+	m_pKinectThread->moveToThread(m_pThread);
+
+	connect(m_pThread, SIGNAL(started()), m_pKinectThread, SLOT(process()));
+	connect(m_pKinectThread, SIGNAL(finished()), m_pThread, SLOT(quit()));
+	connect(m_pKinectThread, SIGNAL(finished()), m_pKinectThread, SLOT(deleteLater()));
+	connect(m_pThread, SIGNAL(finished()), m_pThread, SLOT(deleteLater()));
+	connect(m_pKinectThread, SIGNAL(EventFrameColor()), this, SLOT(EventFrameColor()));
+	connect(m_pKinectThread, SIGNAL(EventSkeleton()), this, SLOT(EventSkeleton()));
+
+	m_pThread->start();
 }
 
 void KinectMotionCapture::EventFrameColor()
@@ -86,7 +93,6 @@ void KinectMotionCapture::EventFrameColor()
     }
 
     texture->UnlockRect(0);
-	delete texture;
 
 	NuiImageStreamReleaseFrame(m_videoStream, image_frame);
 }

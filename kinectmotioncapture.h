@@ -2,6 +2,7 @@
 #define KINECTMOTIONCAPTURE_H
 
 #include <QtWidgets/QMainWindow>
+#include <QThread>
 
 #include <windows.h>
 #include <NuiApi.h>
@@ -45,6 +46,7 @@ private:
 	KinectVideo *m_pKinectVideo;
 	KinectSkeleton *m_pKinectSkeleton;
 	KinectThread *m_pKinectThread;
+	QThread* m_pThread;
 
 	Ui::KinectMotionCaptureClass ui;
 };
