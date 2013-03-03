@@ -16,6 +16,7 @@ KinectMotionCapture::KinectMotionCapture(QWidget *parent)
 	m_pKinectSkeleton = NULL;
 	m_pKinectThread = NULL;
 	m_pThread = NULL;
+	m_bRecording = false;
 }
 
 KinectMotionCapture::~KinectMotionCapture()
@@ -68,6 +69,8 @@ void KinectMotionCapture::Initialize()
 	connect(m_pThread, SIGNAL(finished()), m_pThread, SLOT(deleteLater()));
 	connect(m_pKinectThread, SIGNAL(EventFrameColor()), this, SLOT(EventFrameColor()));
 	connect(m_pKinectThread, SIGNAL(EventSkeleton()), this, SLOT(EventSkeleton()));
+
+	connect(ui.pushButton, SIGNAL(clicked()), m_pKinectSkeleton, SLOT(StartRecording()));
 
 	m_pThread->start();
 }

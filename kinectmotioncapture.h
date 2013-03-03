@@ -43,6 +43,8 @@ private:
 	DWORD m_LastSkeletonFoundTime;
     bool m_bScreenBlanked;
 
+	bool m_bRecording;
+
 	KinectVideo *m_pKinectVideo;
 	KinectSkeleton *m_pKinectSkeleton;
 	KinectThread *m_pKinectThread;

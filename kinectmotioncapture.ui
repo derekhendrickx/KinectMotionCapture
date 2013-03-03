@@ -66,6 +66,13 @@
        </item>
       </layout>
      </item>
+     <item>
+      <widget class="QPushButton" name="pushButton">
+       <property name="text">
+        <string>Record</string>
+       </property>
+      </widget>
+     </item>
     </layout>
    </widget>
   </widget>

@@ -12,12 +12,21 @@ KinectSkeleton::KinectSkeleton(QWidget *parent, QLabel *label, int width, int he
 	m_pPixmap = new QPixmap(m_iWidth, m_iHeight);
 	m_pPixmap->fill(Qt::black);
 	m_pPainter = new QPainter(m_pPixmap);
+	m_bRecording = false;
 }
 
 KinectSkeleton::~KinectSkeleton()
 {
 	delete m_pPainter;
 	delete m_pPixmap;
+}
+
+void KinectSkeleton::StartRecording()
+{
+	if (!m_bRecording)
+		m_bRecording = true;
+	else
+		m_bRecording = false;
 }
 
 QPointF KinectSkeleton::SkeletonToScreen(Vector4 skeletonPoint, int width, int height)
@@ -76,22 +85,32 @@ void KinectSkeleton::DrawSkeleton(const NUI_SKELETON_DATA & skel, int windowWidt
 
     int i;
 
-	// Création d'un objet QFile
-	QFile file("Qt.txt");
-	// On ouvre notre fichier en lecture seule et on vérifie l'ouverture
-	if (!file.open(QIODevice::Append | QIODevice::Text))
-		return;
+	if (m_bRecording)
+	{
+		// Création d'un objet QFile
+		QFile file("skeleton-data.txt");
+		// On ouvre notre fichier en lecture seule et on vérifie l'ouverture
+		if (!file.open(QIODevice::Append | QIODevice::Text))
+			return;
  
-	// Création d'un objet QTextStream à partir de notre objet QFile
-	QTextStream flux(&file);
-	// On choisit le codec correspondant au jeu de caractère que l'on souhaite ; ici, UTF-8
-	flux.setCodec("UTF-8");
+		// Création d'un objet QTextStream à partir de notre objet QFile
+		QTextStream flux(&file);
+		// On choisit le codec correspondant au jeu de caractère que l'on souhaite ; ici, UTF-8
+		flux.setCodec("UTF-8");
 
-    for (i = 0; i < NUI_SKELETON_POSITION_COUNT; i++)
-    {
-        m_Points[i] = SkeletonToScreen(skel.SkeletonPositions[i], windowWidth, windowHeight);
-		flux << skel.SkeletonPositions[i].x << "\t" << skel.SkeletonPositions[i].y << "\t" << skel.SkeletonPositions[i].z << "\t" << skel.SkeletonPositions[i].w << endl;
-    }
+		for (i = 0; i < NUI_SKELETON_POSITION_COUNT; i++)
+		{
+			m_Points[i] = SkeletonToScreen(skel.SkeletonPositions[i], windowWidth, windowHeight);
+			flux << skel.SkeletonPositions[i].x << "\t" << skel.SkeletonPositions[i].y << "\t" << skel.SkeletonPositions[i].z << "\t" << skel.SkeletonPositions[i].w << endl;
+		}
+	}
+	else
+	{
+		for (i = 0; i < NUI_SKELETON_POSITION_COUNT; i++)
+		{
+			m_Points[i] = SkeletonToScreen(skel.SkeletonPositions[i], windowWidth, windowHeight);
+		}
+	}
 
     // Render Torso
     DrawBone(skel, NUI_SKELETON_POSITION_HEAD, NUI_SKELETON_POSITION_SHOULDER_CENTER);

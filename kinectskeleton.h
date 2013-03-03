@@ -21,9 +21,15 @@ public:
 
 	void DrawSkeleton(const NUI_SKELETON_DATA &, int, int);
 	void Clear();
+
+public slots:
+	void StartRecording();
+
 private:
 	int m_iWidth;
 	int m_iHeight;
+
+	bool m_bRecording;
 
 	QLabel *m_pLabel;
 	QPixmap *m_pPixmap;

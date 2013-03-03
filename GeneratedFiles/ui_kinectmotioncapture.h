@@ -17,6 +17,7 @@
 #include <QtWidgets/QHeaderView>
 #include <QtWidgets/QLabel>
 #include <QtWidgets/QMainWindow>
+#include <QtWidgets/QPushButton>
 #include <QtWidgets/QStatusBar>
 #include <QtWidgets/QVBoxLayout>
 #include <QtWidgets/QWidget>
@@ -32,6 +33,7 @@ public:
     QHBoxLayout *horizontalLayout;
     QLabel *video;
     QLabel *skeleton;
+    QPushButton *pushButton;
     QStatusBar *statusBar;
 
     void setupUi(QMainWindow *KinectMotionCaptureClass)
@@ -69,6 +71,11 @@ public:
 
         verticalLayout->addLayout(horizontalLayout);
 
+        pushButton = new QPushButton(verticalLayoutWidget);
+        pushButton->setObjectName(QStringLiteral("pushButton"));
+
+        verticalLayout->addWidget(pushButton);
+
         KinectMotionCaptureClass->setCentralWidget(centralWidget);
         statusBar = new QStatusBar(KinectMotionCaptureClass);
         statusBar->setObjectName(QStringLiteral("statusBar"));
@@ -84,6 +91,7 @@ public:
         KinectMotionCaptureClass->setWindowTitle(QApplication::translate("KinectMotionCaptureClass", "Kinect Motion Capture", 0));
         video->setText(QString());
         skeleton->setText(QString());
+        pushButton->setText(QApplication::translate("KinectMotionCaptureClass", "Record", 0));
     } // retranslateUi
 
 };
