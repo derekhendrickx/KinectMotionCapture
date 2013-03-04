@@ -18,6 +18,12 @@ All the steps required to compile and execute the project:
 
 After that if should work, however if the build is not successfull and ask for a file called "Qt5Cored5.lib", you have to go to the Visual Studio 2010 properties of the project then in the Linker, look at the Input and edit the Additionnal Dependencies field to remove all files like "Qt5Cored5.lib". It's a bug with the lastest Qt Add-In for Visual Studio 2010.
 
+> When yout create a new Qt5 project the VS-addin puts incorrect names for the debug .libs, adding a "5" at the end.
+For example, it adds a dependency on Qt5Guid5.lib where it should be Qt5Guid.lib
+>
+> Debug (win32): qtmaind.lib;Qt5Cored.lib;Qt5Guid.lib;Qt5Widgetsd.lib;%(AdditionalDependencies)
+> Release (win32): qtmain.lib;Qt5Core.lib;Qt5Gui.lib;Qt5Widgets.lib;%(AdditionalDependencies)
+
 Authors
 -------
 * Derek Hendrickx
