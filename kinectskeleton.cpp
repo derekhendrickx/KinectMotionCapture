@@ -1,8 +1,5 @@
 #include "kinectskeleton.h"
 
-#include <QFile>
-#include <QTextStream>
-
 KinectSkeleton::KinectSkeleton(QWidget *parent, QLabel *label, int width, int height)
 	: QWidget(parent)
 {
@@ -81,27 +78,32 @@ void KinectSkeleton::DrawBone(const NUI_SKELETON_DATA &skel, NUI_SKELETON_POSITI
 
 void KinectSkeleton::DrawSkeleton(const NUI_SKELETON_DATA & skel, int windowWidth, int windowHeight)
 {
+	if (!m_oKinectBVH.CreateBVHFile("mocap.bvh")) {
+		return;
+	}
+	m_oKinectBVH.CreateSkeletonInformation(skel);
+	
 	Clear();
 
     int i;
 
 	if (m_bRecording)
 	{
-		// Création d'un objet QFile
-		QFile file("skeleton-data.txt");
-		// On ouvre notre fichier en lecture seule et on vérifie l'ouverture
-		if (!file.open(QIODevice::Append | QIODevice::Text))
-			return;
+		//// Création d'un objet QFile
+		//QFile file("skeleton-data.txt");
+		//// On ouvre notre fichier en lecture seule et on vérifie l'ouverture
+		//if (!file.open(QIODevice::Append | QIODevice::Text))
+		//	return;
  
-		// Création d'un objet QTextStream à partir de notre objet QFile
-		QTextStream flux(&file);
-		// On choisit le codec correspondant au jeu de caractère que l'on souhaite ; ici, UTF-8
-		flux.setCodec("UTF-8");
+		//// Création d'un objet QTextStream à partir de notre objet QFile
+		//QTextStream flux(&file);
+		//// On choisit le codec correspondant au jeu de caractère que l'on souhaite ; ici, UTF-8
+		//flux.setCodec("UTF-8");
 
 		for (i = 0; i < NUI_SKELETON_POSITION_COUNT; i++)
 		{
 			m_Points[i] = SkeletonToScreen(skel.SkeletonPositions[i], windowWidth, windowHeight);
-			flux << skel.SkeletonPositions[i].x << "\t" << skel.SkeletonPositions[i].y << "\t" << skel.SkeletonPositions[i].z << "\t" << skel.SkeletonPositions[i].w << endl;
+			/*flux << skel.SkeletonPositions[i].x << "\t" << skel.SkeletonPositions[i].y << "\t" << skel.SkeletonPositions[i].z << "\t" << skel.SkeletonPositions[i].w << endl;*/
 		}
 	}
 	else

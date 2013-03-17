@@ -9,6 +9,8 @@
 #include <windows.h>
 #include <NuiApi.h>
 
+#include "kinectbvh.h"
+
 static const qreal g_JointThickness = 3.0f;
 
 class KinectSkeleton : public QWidget
@@ -35,6 +37,8 @@ private:
 	QPixmap *m_pPixmap;
 	QPainter *m_pPainter;
 	QPointF m_Points[NUI_SKELETON_POSITION_COUNT];
+
+	KinectBVH m_oKinectBVH;
 
 	QPointF SkeletonToScreen(Vector4, int, int);
 	void DrawBone(const NUI_SKELETON_DATA &, NUI_SKELETON_POSITION_INDEX, NUI_SKELETON_POSITION_INDEX);
