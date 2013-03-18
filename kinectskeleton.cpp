@@ -1,5 +1,7 @@
 #include "kinectskeleton.h"
 
+#include <QDebug>
+
 KinectSkeleton::KinectSkeleton(QWidget *parent, QLabel *label, int width, int height)
 	: QWidget(parent)
 {
@@ -10,6 +12,8 @@ KinectSkeleton::KinectSkeleton(QWidget *parent, QLabel *label, int width, int he
 	m_pPixmap->fill(Qt::black);
 	m_pPainter = new QPainter(m_pPixmap);
 	m_bRecording = false;
+	m_bIsCalibrated = false;
+	m_pKinectBVH = new KinectBVH();
 }
 
 KinectSkeleton::~KinectSkeleton()
@@ -20,10 +24,163 @@ KinectSkeleton::~KinectSkeleton()
 
 void KinectSkeleton::StartRecording()
 {
-	if (!m_bRecording)
+	if (!m_bRecording) {
 		m_bRecording = true;
-	else
+	}
+	else {
 		m_bRecording = false;
+	}
+}
+
+bool KinectSkeleton::CalibrateSkeleton(const NUI_SKELETON_DATA &skeleton)
+{
+	// Torso
+	Vector4 hipCenter = skeleton.SkeletonPositions[NUI_SKELETON_POSITION_HIP_CENTER];
+	Vector4 spine = skeleton.SkeletonPositions[NUI_SKELETON_POSITION_SPINE];
+	Vector4 shoulderCenter = skeleton.SkeletonPositions[NUI_SKELETON_POSITION_SHOULDER_CENTER];
+	Vector4 head = skeleton.SkeletonPositions[NUI_SKELETON_POSITION_HEAD];
+
+	// Left Arm
+	Vector4 shoulderLeft = skeleton.SkeletonPositions[NUI_SKELETON_POSITION_SHOULDER_LEFT];
+	Vector4 elbowLeft = skeleton.SkeletonPositions[NUI_SKELETON_POSITION_ELBOW_LEFT];
+	Vector4 wristLeft = skeleton.SkeletonPositions[NUI_SKELETON_POSITION_WRIST_LEFT];
+	Vector4 handLeft = skeleton.SkeletonPositions[NUI_SKELETON_POSITION_HAND_LEFT];
+
+	// Right Arm
+	Vector4 shoulderRight = skeleton.SkeletonPositions[NUI_SKELETON_POSITION_SHOULDER_RIGHT];
+	Vector4 elbowRight = skeleton.SkeletonPositions[NUI_SKELETON_POSITION_ELBOW_RIGHT];
+	Vector4 wristRight = skeleton.SkeletonPositions[NUI_SKELETON_POSITION_WRIST_RIGHT];
+	Vector4 handRight = skeleton.SkeletonPositions[NUI_SKELETON_POSITION_HAND_RIGHT];
+
+	// Left Leg
+	Vector4 hipLeft = skeleton.SkeletonPositions[NUI_SKELETON_POSITION_HIP_LEFT];
+	Vector4 kneeLeft = skeleton.SkeletonPositions[NUI_SKELETON_POSITION_KNEE_LEFT];
+	Vector4 ankleLeft = skeleton.SkeletonPositions[NUI_SKELETON_POSITION_ANKLE_LEFT];
+	Vector4 footLeft = skeleton.SkeletonPositions[NUI_SKELETON_POSITION_FOOT_LEFT];
+
+	// Right Leg
+	Vector4 hipRight = skeleton.SkeletonPositions[NUI_SKELETON_POSITION_HIP_RIGHT];
+	Vector4 kneeRight = skeleton.SkeletonPositions[NUI_SKELETON_POSITION_KNEE_RIGHT];
+	Vector4 ankleRight = skeleton.SkeletonPositions[NUI_SKELETON_POSITION_ANKLE_RIGHT];
+	Vector4 footRight = skeleton.SkeletonPositions[NUI_SKELETON_POSITION_FOOT_RIGHT];
+
+	bool torso = false, leftArm = false, rightArm = false, leftLeg = false, rightLeg = false;
+
+	// Torso
+	qDebug() << "HIP CENTER (" << hipCenter.x << ", " << hipCenter.y << ", " << hipCenter.z << ")" << endl;
+	qDebug() << "SPINE (" << spine.x << ", " << spine.y << ", " << spine.z << ")" << endl;
+	if (hipCenter.x - 0.01f == spine.x  - 0.01f || hipCenter.x + 0.01f == spine.x  + 0.01f)
+	{
+		qDebug() << "OK" << endl;
+		if (hipCenter.x == shoulderCenter.x && hipCenter.z == shoulderCenter.z)
+		{
+			if (hipCenter.x == head.x && hipCenter.z == head.z)
+			{
+				m_pKinectBVH->AddOffset(hipCenter);
+				m_pKinectBVH->AddOffset(spine);
+				m_pKinectBVH->AddOffset(shoulderCenter);
+				m_pKinectBVH->AddOffset(head);
+				torso = true;
+				OutputDebugString(L"TORSO CALIBRATED");
+			}
+		}
+	}
+
+	// Left Arm
+	if (torso)
+	{
+		if (shoulderCenter.y == shoulderLeft.y && shoulderCenter.z == shoulderLeft.z)
+		{
+			if (shoulderCenter.y == elbowLeft.y && shoulderCenter.z == elbowLeft.z)
+			{
+				if (shoulderCenter.y == wristLeft.y && shoulderCenter.z == wristLeft.z)
+				{
+					if (shoulderCenter.y == handLeft.y && shoulderCenter.z == handLeft.z)
+					{
+						m_pKinectBVH->AddOffset(shoulderLeft);
+						m_pKinectBVH->AddOffset(elbowLeft);
+						m_pKinectBVH->AddOffset(wristLeft);
+						m_pKinectBVH->AddOffset(handLeft);
+						leftArm = true;
+					}
+				}
+			}
+		}
+	}
+
+    // Right Arm
+	if (torso && leftArm)
+	{
+		if (shoulderCenter.y == shoulderRight.y && shoulderCenter.z == shoulderRight.z)
+		{
+			if (shoulderCenter.y == elbowRight.y && shoulderCenter.z == elbowRight.z)
+			{
+				if (shoulderCenter.y == wristRight.y && shoulderCenter.z == wristRight.z)
+				{
+					if (shoulderCenter.y == handRight.y && shoulderCenter.z == handRight.z)
+					{
+						m_pKinectBVH->AddOffset(shoulderRight);
+						m_pKinectBVH->AddOffset(elbowRight);
+						m_pKinectBVH->AddOffset(wristRight);
+						m_pKinectBVH->AddOffset(handRight);
+						rightArm = true;
+					}
+				}
+			}
+		}
+	}
+
+    // Left Leg
+	if (torso && leftArm && rightArm)
+	{
+		if (hipCenter.y == hipLeft.y && hipCenter.z == hipLeft.z)
+		{
+			if (hipLeft.x == kneeLeft.x && hipLeft.z == kneeLeft.z)
+			{
+				if (hipLeft.x == ankleLeft.x && hipLeft.z == ankleLeft.z)
+				{
+					if (hipLeft.x == footLeft.x && hipLeft.z == footLeft.z)
+					{
+						m_pKinectBVH->AddOffset(hipLeft);
+						m_pKinectBVH->AddOffset(kneeLeft);
+						m_pKinectBVH->AddOffset(ankleLeft);
+						m_pKinectBVH->AddOffset(footLeft);
+						leftLeg = true;
+					}
+				}
+			}
+		}
+	}
+
+    // Right Leg
+    if (torso && leftArm && rightArm && leftLeg)
+	{
+		if (hipCenter.y == hipRight.y && hipCenter.z == hipRight.z)
+		{
+			if (hipRight.x == kneeRight.x && hipRight.z == kneeRight.z)
+			{
+				if (hipRight.x == ankleRight.x && hipRight.z == ankleRight.z)
+				{
+					if (hipRight.x == footRight.x && hipRight.z == footRight.z)
+					{
+						m_pKinectBVH->AddOffset(hipRight);
+						m_pKinectBVH->AddOffset(kneeRight);
+						m_pKinectBVH->AddOffset(ankleRight);
+						m_pKinectBVH->AddOffset(footRight);
+						rightLeg = true;
+					}
+				}
+			}
+		}
+	}
+
+	if (torso && leftArm && rightArm && leftLeg && rightLeg)
+	{
+		OutputDebugString(L"CALIBRATED");
+		m_bIsCalibrated = true;
+		return true;
+	}
+	return false;
 }
 
 QPointF KinectSkeleton::SkeletonToScreen(Vector4 skeletonPoint, int width, int height)
@@ -76,42 +233,15 @@ void KinectSkeleton::DrawBone(const NUI_SKELETON_DATA &skel, NUI_SKELETON_POSITI
     }
 }
 
-void KinectSkeleton::DrawSkeleton(const NUI_SKELETON_DATA & skel, int windowWidth, int windowHeight)
+void KinectSkeleton::DrawSkeleton(const NUI_SKELETON_DATA &skel, int windowWidth, int windowHeight)
 {
-	if (!m_oKinectBVH.CreateBVHFile("mocap.bvh")) {
-		return;
-	}
-	m_oKinectBVH.CreateSkeletonInformation(skel);
-	
 	Clear();
 
     int i;
 
-	if (m_bRecording)
+	for (i = 0; i < NUI_SKELETON_POSITION_COUNT; i++)
 	{
-		//// Création d'un objet QFile
-		//QFile file("skeleton-data.txt");
-		//// On ouvre notre fichier en lecture seule et on vérifie l'ouverture
-		//if (!file.open(QIODevice::Append | QIODevice::Text))
-		//	return;
- 
-		//// Création d'un objet QTextStream à partir de notre objet QFile
-		//QTextStream flux(&file);
-		//// On choisit le codec correspondant au jeu de caractère que l'on souhaite ; ici, UTF-8
-		//flux.setCodec("UTF-8");
-
-		for (i = 0; i < NUI_SKELETON_POSITION_COUNT; i++)
-		{
-			m_Points[i] = SkeletonToScreen(skel.SkeletonPositions[i], windowWidth, windowHeight);
-			/*flux << skel.SkeletonPositions[i].x << "\t" << skel.SkeletonPositions[i].y << "\t" << skel.SkeletonPositions[i].z << "\t" << skel.SkeletonPositions[i].w << endl;*/
-		}
-	}
-	else
-	{
-		for (i = 0; i < NUI_SKELETON_POSITION_COUNT; i++)
-		{
-			m_Points[i] = SkeletonToScreen(skel.SkeletonPositions[i], windowWidth, windowHeight);
-		}
+		m_Points[i] = SkeletonToScreen(skel.SkeletonPositions[i], windowWidth, windowHeight);
 	}
 
     // Render Torso

@@ -21,8 +21,13 @@ public:
 	KinectSkeleton(QWidget *parent, QLabel *, int, int);
 	~KinectSkeleton();
 
+	inline bool IsRecording() { return m_bRecording; };
+	inline bool IsCalibrated() { return m_bIsCalibrated; };
+
 	void DrawSkeleton(const NUI_SKELETON_DATA &, int, int);
 	void Clear();
+
+	bool CalibrateSkeleton(const NUI_SKELETON_DATA &);
 
 public slots:
 	void StartRecording();
@@ -32,13 +37,14 @@ private:
 	int m_iHeight;
 
 	bool m_bRecording;
+	bool m_bIsCalibrated;
 
 	QLabel *m_pLabel;
 	QPixmap *m_pPixmap;
 	QPainter *m_pPainter;
 	QPointF m_Points[NUI_SKELETON_POSITION_COUNT];
 
-	KinectBVH m_oKinectBVH;
+	KinectBVH *m_pKinectBVH;
 
 	QPointF SkeletonToScreen(Vector4, int, int);
 	void DrawBone(const NUI_SKELETON_DATA &, NUI_SKELETON_POSITION_INDEX, NUI_SKELETON_POSITION_INDEX);

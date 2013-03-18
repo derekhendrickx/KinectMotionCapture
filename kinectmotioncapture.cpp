@@ -148,6 +148,11 @@ void KinectMotionCapture::EventSkeleton()
         {
             // We're tracking the skeleton, draw it
             m_pKinectSkeleton->DrawSkeleton(SkeletonFrame.SkeletonData[i], 320, 240);
+
+			if (m_pKinectSkeleton->IsRecording() && !m_pKinectSkeleton->IsCalibrated())
+			{
+				m_pKinectSkeleton->CalibrateSkeleton(SkeletonFrame.SkeletonData[i]);
+			}
         }
         else if (trackingState == NUI_SKELETON_POSITION_ONLY)
         {

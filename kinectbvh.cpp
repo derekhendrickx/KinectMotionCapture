@@ -12,6 +12,11 @@ KinectBVH::~KinectBVH()
 	m_pFile = NULL;
 }
 
+void KinectBVH::AddOffset(const Vector4 vector)
+{
+	m_pBVH_s->offsets.push_back(vector);
+}
+
 bool KinectBVH::CreateBVHFile(QString filename)
 {
 	// création d'un objet qfile
@@ -36,7 +41,7 @@ void KinectBVH::CreateSkeletonInformation(const NUI_SKELETON_DATA &skeleton)
 	flux << "{" << endl;
 
 		// Chest
-		flux << "\tOFFSET " << skeleton.SkeletonPositions[NUI_SKELETON_POSITION_HIP_CENTER].x << " " << skeleton.SkeletonPositions[NUI_SKELETON_POSITION_HIP_CENTER].y << " " << skeleton.SkeletonPositions[NUI_SKELETON_POSITION_HIP_CENTER].z << endl;
+		flux << "\tOFFSET 0.00 0.00 0.00" << endl;
 		flux << "\tCHANNELS 6 Xposition Yposition Zposition Zrotation Xrotation Yrotation" << endl;
 		flux << "\tJOINT Chest" << endl;
 		flux << "\t{" << endl;
