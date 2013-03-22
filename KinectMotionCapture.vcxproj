@@ -119,6 +119,7 @@
     <ClCompile Include="kinectmotioncapture.cpp" />
     <ClCompile Include="kinectskeleton.cpp" />
     <ClCompile Include="kinectthread.cpp" />
+    <ClCompile Include="kinectvector4.cpp" />
     <ClCompile Include="kinectvideo.cpp" />
     <ClCompile Include="main.cpp" />
   </ItemGroup>
@@ -149,6 +150,7 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="GeneratedFiles\ui_kinectmotioncapture.h" />
+    <ClInclude Include="kinectvector4.h" />
     <CustomBuild Include="kinectbvh.h">
       <AdditionalInputs Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">$(QTDIR)\bin\moc.exe;%(FullPath)</AdditionalInputs>
       <Message Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Moc%27ing kinectbvh.h...</Message>

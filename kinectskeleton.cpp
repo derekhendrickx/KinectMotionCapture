@@ -35,10 +35,10 @@ void KinectSkeleton::StartRecording()
 bool KinectSkeleton::CalibrateSkeleton(const NUI_SKELETON_DATA &skeleton)
 {
 	// Torso
-	Vector4 hipCenter = skeleton.SkeletonPositions[NUI_SKELETON_POSITION_HIP_CENTER];
-	Vector4 spine = skeleton.SkeletonPositions[NUI_SKELETON_POSITION_SPINE];
-	Vector4 shoulderCenter = skeleton.SkeletonPositions[NUI_SKELETON_POSITION_SHOULDER_CENTER];
-	Vector4 head = skeleton.SkeletonPositions[NUI_SKELETON_POSITION_HEAD];
+	KinectVector4 hipCenter = KinectVector4(skeleton.SkeletonPositions[NUI_SKELETON_POSITION_HIP_CENTER]);
+	KinectVector4 spine = KinectVector4(skeleton.SkeletonPositions[NUI_SKELETON_POSITION_SPINE]);
+	KinectVector4 shoulderCenter = KinectVector4(skeleton.SkeletonPositions[NUI_SKELETON_POSITION_SHOULDER_CENTER]);
+	KinectVector4 head = KinectVector4(skeleton.SkeletonPositions[NUI_SKELETON_POSITION_HEAD]);
 
 	// Left Arm
 	Vector4 shoulderLeft = skeleton.SkeletonPositions[NUI_SKELETON_POSITION_SHOULDER_LEFT];
@@ -47,10 +47,10 @@ bool KinectSkeleton::CalibrateSkeleton(const NUI_SKELETON_DATA &skeleton)
 	Vector4 handLeft = skeleton.SkeletonPositions[NUI_SKELETON_POSITION_HAND_LEFT];
 
 	// Right Arm
-	Vector4 shoulderRight = skeleton.SkeletonPositions[NUI_SKELETON_POSITION_SHOULDER_RIGHT];
-	Vector4 elbowRight = skeleton.SkeletonPositions[NUI_SKELETON_POSITION_ELBOW_RIGHT];
-	Vector4 wristRight = skeleton.SkeletonPositions[NUI_SKELETON_POSITION_WRIST_RIGHT];
-	Vector4 handRight = skeleton.SkeletonPositions[NUI_SKELETON_POSITION_HAND_RIGHT];
+	KinectVector4 shoulderRight = KinectVector4(skeleton.SkeletonPositions[NUI_SKELETON_POSITION_SHOULDER_RIGHT]);
+	KinectVector4 elbowRight = KinectVector4(skeleton.SkeletonPositions[NUI_SKELETON_POSITION_ELBOW_RIGHT]);
+	KinectVector4 wristRight = KinectVector4(skeleton.SkeletonPositions[NUI_SKELETON_POSITION_WRIST_RIGHT]);
+	KinectVector4 handRight = KinectVector4(skeleton.SkeletonPositions[NUI_SKELETON_POSITION_HAND_RIGHT]);
 
 	// Left Leg
 	Vector4 hipLeft = skeleton.SkeletonPositions[NUI_SKELETON_POSITION_HIP_LEFT];
@@ -67,119 +67,146 @@ bool KinectSkeleton::CalibrateSkeleton(const NUI_SKELETON_DATA &skeleton)
 	bool torso = false, leftArm = false, rightArm = false, leftLeg = false, rightLeg = false;
 
 	// Torso
-	qDebug() << "HIP CENTER (" << hipCenter.x << ", " << hipCenter.y << ", " << hipCenter.z << ")" << endl;
-	qDebug() << "SPINE (" << spine.x << ", " << spine.y << ", " << spine.z << ")" << endl;
-	if (hipCenter.x - 0.01f == spine.x  - 0.01f || hipCenter.x + 0.01f == spine.x  + 0.01f)
-	{
-		qDebug() << "OK" << endl;
-		if (hipCenter.x == shoulderCenter.x && hipCenter.z == shoulderCenter.z)
-		{
-			if (hipCenter.x == head.x && hipCenter.z == head.z)
-			{
-				m_pKinectBVH->AddOffset(hipCenter);
-				m_pKinectBVH->AddOffset(spine);
-				m_pKinectBVH->AddOffset(shoulderCenter);
-				m_pKinectBVH->AddOffset(head);
-				torso = true;
-				OutputDebugString(L"TORSO CALIBRATED");
-			}
-		}
-	}
+	KinectVector4 hipToSpine = spine - hipCenter;
+	KinectVector4 hipToShoulder = shoulderCenter - hipCenter;
+	KinectVector4 SpineToShoulder = hipToSpine - hipToShoulder;
 
-	// Left Arm
-	if (torso)
-	{
-		if (shoulderCenter.y == shoulderLeft.y && shoulderCenter.z == shoulderLeft.z)
-		{
-			if (shoulderCenter.y == elbowLeft.y && shoulderCenter.z == elbowLeft.z)
-			{
-				if (shoulderCenter.y == wristLeft.y && shoulderCenter.z == wristLeft.z)
-				{
-					if (shoulderCenter.y == handLeft.y && shoulderCenter.z == handLeft.z)
-					{
-						m_pKinectBVH->AddOffset(shoulderLeft);
-						m_pKinectBVH->AddOffset(elbowLeft);
-						m_pKinectBVH->AddOffset(wristLeft);
-						m_pKinectBVH->AddOffset(handLeft);
-						leftArm = true;
-					}
-				}
-			}
-		}
-	}
+	float angle = hipToSpine.angle(hipToShoulder);
+	qDebug() << "Angle Hip = " << angle << endl;
 
-    // Right Arm
-	if (torso && leftArm)
-	{
-		if (shoulderCenter.y == shoulderRight.y && shoulderCenter.z == shoulderRight.z)
-		{
-			if (shoulderCenter.y == elbowRight.y && shoulderCenter.z == elbowRight.z)
-			{
-				if (shoulderCenter.y == wristRight.y && shoulderCenter.z == wristRight.z)
-				{
-					if (shoulderCenter.y == handRight.y && shoulderCenter.z == handRight.z)
-					{
-						m_pKinectBVH->AddOffset(shoulderRight);
-						m_pKinectBVH->AddOffset(elbowRight);
-						m_pKinectBVH->AddOffset(wristRight);
-						m_pKinectBVH->AddOffset(handRight);
-						rightArm = true;
-					}
-				}
-			}
-		}
-	}
+	angle = hipToSpine.angle(SpineToShoulder);
+	qDebug() << "Angle Spine = " << angle << endl;
 
-    // Left Leg
-	if (torso && leftArm && rightArm)
-	{
-		if (hipCenter.y == hipLeft.y && hipCenter.z == hipLeft.z)
-		{
-			if (hipLeft.x == kneeLeft.x && hipLeft.z == kneeLeft.z)
-			{
-				if (hipLeft.x == ankleLeft.x && hipLeft.z == ankleLeft.z)
-				{
-					if (hipLeft.x == footLeft.x && hipLeft.z == footLeft.z)
-					{
-						m_pKinectBVH->AddOffset(hipLeft);
-						m_pKinectBVH->AddOffset(kneeLeft);
-						m_pKinectBVH->AddOffset(ankleLeft);
-						m_pKinectBVH->AddOffset(footLeft);
-						leftLeg = true;
-					}
-				}
-			}
-		}
-	}
+	angle = SpineToShoulder.angle(hipToShoulder);
+	qDebug() << "Angle Shoulder = " << angle << endl;
 
-    // Right Leg
-    if (torso && leftArm && rightArm && leftLeg)
-	{
-		if (hipCenter.y == hipRight.y && hipCenter.z == hipRight.z)
-		{
-			if (hipRight.x == kneeRight.x && hipRight.z == kneeRight.z)
-			{
-				if (hipRight.x == ankleRight.x && hipRight.z == ankleRight.z)
-				{
-					if (hipRight.x == footRight.x && hipRight.z == footRight.z)
-					{
-						m_pKinectBVH->AddOffset(hipRight);
-						m_pKinectBVH->AddOffset(kneeRight);
-						m_pKinectBVH->AddOffset(ankleRight);
-						m_pKinectBVH->AddOffset(footRight);
-						rightLeg = true;
-					}
-				}
-			}
-		}
-	}
+	// Right Arm
+	KinectVector4 shoulderToElbow = elbowRight - shoulderRight;
+	KinectVector4 shoulderToWrist = wristRight - shoulderRight;
+	KinectVector4 elbowToWrist = shoulderToElbow - shoulderToWrist;
 
-	if (torso && leftArm && rightArm && leftLeg && rightLeg)
-	{
-		OutputDebugString(L"CALIBRATED");
-		m_bIsCalibrated = true;
-		return true;
-	}
+	angle = shoulderToElbow.angle(shoulderToWrist);
+	qDebug() << "Angle Shoulder = " << angle << endl;
+
+	angle = shoulderToElbow.angle(elbowToWrist);
+	qDebug() << "Angle Elbow = " << angle << endl;
+
+	angle = elbowToWrist.angle(shoulderToWrist);
+	qDebug() << "Angle Wrist = " << angle << endl;
+
+	//qDebug() << "HIP CENTER (" << hipCenter.x << ", " << hipCenter.y << ", " << hipCenter.z << ")" << endl;
+	//qDebug() << "SPINE (" << spine.x << ", " << spine.y << ", " << spine.z << ")" << endl;
+	//if (hipCenter.x - 0.01f == spine.x  - 0.01f || hipCenter.x + 0.01f == spine.x  + 0.01f)
+	//{
+	//	qDebug() << "OK" << endl;
+	//	if (hipCenter.x == shoulderCenter.x && hipCenter.z == shoulderCenter.z)
+	//	{
+	//		if (hipCenter.x == head.x && hipCenter.z == head.z)
+	//		{
+	//			m_pKinectBVH->AddOffset(hipCenter);
+	//			m_pKinectBVH->AddOffset(spine);
+	//			m_pKinectBVH->AddOffset(shoulderCenter);
+	//			m_pKinectBVH->AddOffset(head);
+	//			torso = true;
+	//			OutputDebugString(L"TORSO CALIBRATED");
+	//		}
+	//	}
+	//}
+
+	//// Left Arm
+	//if (torso)
+	//{
+	//	if (shoulderCenter.y == shoulderLeft.y && shoulderCenter.z == shoulderLeft.z)
+	//	{
+	//		if (shoulderCenter.y == elbowLeft.y && shoulderCenter.z == elbowLeft.z)
+	//		{
+	//			if (shoulderCenter.y == wristLeft.y && shoulderCenter.z == wristLeft.z)
+	//			{
+	//				if (shoulderCenter.y == handLeft.y && shoulderCenter.z == handLeft.z)
+	//				{
+	//					m_pKinectBVH->AddOffset(shoulderLeft);
+	//					m_pKinectBVH->AddOffset(elbowLeft);
+	//					m_pKinectBVH->AddOffset(wristLeft);
+	//					m_pKinectBVH->AddOffset(handLeft);
+	//					leftArm = true;
+	//				}
+	//			}
+	//		}
+	//	}
+	//}
+
+ //   // Right Arm
+	//if (torso && leftArm)
+	//{
+	//	if (shoulderCenter.y == shoulderRight.y && shoulderCenter.z == shoulderRight.z)
+	//	{
+	//		if (shoulderCenter.y == elbowRight.y && shoulderCenter.z == elbowRight.z)
+	//		{
+	//			if (shoulderCenter.y == wristRight.y && shoulderCenter.z == wristRight.z)
+	//			{
+	//				if (shoulderCenter.y == handRight.y && shoulderCenter.z == handRight.z)
+	//				{
+	//					m_pKinectBVH->AddOffset(shoulderRight);
+	//					m_pKinectBVH->AddOffset(elbowRight);
+	//					m_pKinectBVH->AddOffset(wristRight);
+	//					m_pKinectBVH->AddOffset(handRight);
+	//					rightArm = true;
+	//				}
+	//			}
+	//		}
+	//	}
+	//}
+
+ //   // Left Leg
+	//if (torso && leftArm && rightArm)
+	//{
+	//	if (hipCenter.y == hipLeft.y && hipCenter.z == hipLeft.z)
+	//	{
+	//		if (hipLeft.x == kneeLeft.x && hipLeft.z == kneeLeft.z)
+	//		{
+	//			if (hipLeft.x == ankleLeft.x && hipLeft.z == ankleLeft.z)
+	//			{
+	//				if (hipLeft.x == footLeft.x && hipLeft.z == footLeft.z)
+	//				{
+	//					m_pKinectBVH->AddOffset(hipLeft);
+	//					m_pKinectBVH->AddOffset(kneeLeft);
+	//					m_pKinectBVH->AddOffset(ankleLeft);
+	//					m_pKinectBVH->AddOffset(footLeft);
+	//					leftLeg = true;
+	//				}
+	//			}
+	//		}
+	//	}
+	//}
+
+ //   // Right Leg
+ //   if (torso && leftArm && rightArm && leftLeg)
+	//{
+	//	if (hipCenter.y == hipRight.y && hipCenter.z == hipRight.z)
+	//	{
+	//		if (hipRight.x == kneeRight.x && hipRight.z == kneeRight.z)
+	//		{
+	//			if (hipRight.x == ankleRight.x && hipRight.z == ankleRight.z)
+	//			{
+	//				if (hipRight.x == footRight.x && hipRight.z == footRight.z)
+	//				{
+	//					m_pKinectBVH->AddOffset(hipRight);
+	//					m_pKinectBVH->AddOffset(kneeRight);
+	//					m_pKinectBVH->AddOffset(ankleRight);
+	//					m_pKinectBVH->AddOffset(footRight);
+	//					rightLeg = true;
+	//				}
+	//			}
+	//		}
+	//	}
+	//}
+
+	//if (torso && leftArm && rightArm && leftLeg && rightLeg)
+	//{
+	//	OutputDebugString(L"CALIBRATED");
+	//	m_bIsCalibrated = true;
+	//	return true;
+	//}
 	return false;
 }
 

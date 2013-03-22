@@ -10,6 +10,7 @@
 #include <NuiApi.h>
 
 #include "kinectbvh.h"
+#include "kinectvector4.h"
 
 static const qreal g_JointThickness = 3.0f;
 
