@@ -2,10 +2,7 @@
 
 KinectBVH::KinectBVH()
 {
-	m_initMotion = false;
-	m_initHierarchy = false;
-	m_framePerSecond = NULL;
-	m_nbFrame = NULL;
+	
 }
 
 KinectBVH::~KinectBVH()
@@ -22,9 +19,9 @@ void KinectBVH::AddOffset(const Vector4 vector)
 
 bool KinectBVH::CreateBVHFile(QString filename)
 {
-	// crï¿½ation d'un objet qfile
+	// création d'un objet qfile
 	m_pFile = new QFile(filename);
-	// on ouvre notre fichier en lecture seule et on vï¿½rifie l'ouverture
+	// on ouvre notre fichier en lecture seule et on vérifie l'ouverture
 	if (!m_pFile->open(QIODevice::Append | QIODevice::Text)) {
 		return false;
 	}
@@ -33,9 +30,9 @@ bool KinectBVH::CreateBVHFile(QString filename)
 
 void KinectBVH::CreateSkeletonInformation(const NUI_SKELETON_DATA &skeleton)
 {
-	// crï¿½ation d'un objet qtextstream ï¿½ partir de notre objet qfile
+	// création d'un objet qtextstream à partir de notre objet qfile
 	QTextStream flux(m_pFile);
-	// on choisit le codec correspondant au jeu de caractï¿½re que l'on souhaite ; ici, utf-8
+	// on choisit le codec correspondant au jeu de caractère que l'on souhaite ; ici, utf-8
 	flux.setCodec("utf-8");
 
 	// ROOT
@@ -190,53 +187,4 @@ void KinectBVH::CreateSkeletonInformation(const NUI_SKELETON_DATA &skeleton)
 		flux << "\t}" << endl;
 
 	flux << "}" << endl;
-}
-
-void KinectBVH::AddNbFrames(int nbFrames)
-{
-	m_nbFrame = nbFrames;
-}
-
-void KinectBVH::AddFramePerSecond(float fps)
-{
-	m_framePerSecond = fps;
-}
-
-void KinectBVH::AddMotionData(std::vector<Vector4> offsets)
-{
-	if (m_initMotion)
-	{
-		// crÃ©ation d'un objet qtextstream Ã  partir de notre objet qfile
-		QTextStream flux(m_pFile);
-		// on choisit le codec correspondant au jeu de caractÃ¨re que l'on souhaite ; ici, utf-8
-		flux.setCodec("utf-8");
-
-		// on ajoute la motion courant dans le fichier bvh 
-		for (unsigned i=0; i<offsets.size();i++)
-		{
-			flux << offsets[i].x << "\t";
-			flux << offsets[i].y << "\t";
-			flux << offsets[i].z << "\t";
-		}
-		flux << endl;
-
-		// on vide le buffer correspondant Ã  la motion courante
-		offsets.clear();
-	}
-}
-
-void KinectBVH::InitMotion()
-{
-	if (m_nbFrame != NULL && m_framePerSecond != NULL && m_initHierarchy)
-	{
-		// crÃ©ation d'un objet qtextstream Ã  partir de notre objet qfile
-		QTextStream flux(m_pFile);
-		// on choisit le codec correspondant au jeu de caractÃ¨re que l'on souhaite ; ici, utf-8
-		flux.setCodec("utf-8");
-
-		flux << "MOTION" << endl;
-		flux << "Frames:   " << m_nbFrame << endl;
-		flux << "Frame Time: " << m_framePerSecond << endl;
-		m_initMotion = true;
-	}
 }
