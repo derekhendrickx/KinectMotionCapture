@@ -10,8 +10,10 @@
 #include <NuiApi.h>
 #include <vector>
 
+#include "kinectvector4.h"
+
 struct bvh_s {
-	std::vector<Vector4> offsets;
+	std::vector<KinectVector4> offsets;
 };
 
 class KinectBVH : public QObject
@@ -22,7 +24,7 @@ public:
 	KinectBVH();
 	~KinectBVH();
 
-	void AddOffset(const Vector4);
+	void AddOffset(const KinectVector4 &);
 
 	bool CreateBVHFile(QString);
 	void CreateSkeletonInformation(const NUI_SKELETON_DATA &);

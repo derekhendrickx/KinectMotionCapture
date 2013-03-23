@@ -12,7 +12,7 @@ KinectBVH::~KinectBVH()
 	m_pFile = NULL;
 }
 
-void KinectBVH::AddOffset(const Vector4 vector)
+void KinectBVH::AddOffset(const KinectVector4 &vector)
 {
 	m_pBVH_s->offsets.push_back(vector);
 }

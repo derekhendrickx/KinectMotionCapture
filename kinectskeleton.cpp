@@ -1,6 +1,9 @@
 #include "kinectskeleton.h"
 
 #include <QDebug>
+#include <cmath>
+
+#define PI 3.14159265
 
 KinectSkeleton::KinectSkeleton(QWidget *parent, QLabel *label, int width, int height)
 	: QWidget(parent)
@@ -41,10 +44,10 @@ bool KinectSkeleton::CalibrateSkeleton(const NUI_SKELETON_DATA &skeleton)
 	KinectVector4 head = KinectVector4(skeleton.SkeletonPositions[NUI_SKELETON_POSITION_HEAD]);
 
 	// Left Arm
-	Vector4 shoulderLeft = skeleton.SkeletonPositions[NUI_SKELETON_POSITION_SHOULDER_LEFT];
-	Vector4 elbowLeft = skeleton.SkeletonPositions[NUI_SKELETON_POSITION_ELBOW_LEFT];
-	Vector4 wristLeft = skeleton.SkeletonPositions[NUI_SKELETON_POSITION_WRIST_LEFT];
-	Vector4 handLeft = skeleton.SkeletonPositions[NUI_SKELETON_POSITION_HAND_LEFT];
+	KinectVector4 shoulderLeft = KinectVector4(skeleton.SkeletonPositions[NUI_SKELETON_POSITION_SHOULDER_LEFT]);
+	KinectVector4 elbowLeft = KinectVector4(skeleton.SkeletonPositions[NUI_SKELETON_POSITION_ELBOW_LEFT]);
+	KinectVector4 wristLeft = KinectVector4(skeleton.SkeletonPositions[NUI_SKELETON_POSITION_WRIST_LEFT]);
+	KinectVector4 handLeft = KinectVector4(skeleton.SkeletonPositions[NUI_SKELETON_POSITION_HAND_LEFT]);
 
 	// Right Arm
 	KinectVector4 shoulderRight = KinectVector4(skeleton.SkeletonPositions[NUI_SKELETON_POSITION_SHOULDER_RIGHT]);
@@ -53,160 +56,105 @@ bool KinectSkeleton::CalibrateSkeleton(const NUI_SKELETON_DATA &skeleton)
 	KinectVector4 handRight = KinectVector4(skeleton.SkeletonPositions[NUI_SKELETON_POSITION_HAND_RIGHT]);
 
 	// Left Leg
-	Vector4 hipLeft = skeleton.SkeletonPositions[NUI_SKELETON_POSITION_HIP_LEFT];
-	Vector4 kneeLeft = skeleton.SkeletonPositions[NUI_SKELETON_POSITION_KNEE_LEFT];
-	Vector4 ankleLeft = skeleton.SkeletonPositions[NUI_SKELETON_POSITION_ANKLE_LEFT];
-	Vector4 footLeft = skeleton.SkeletonPositions[NUI_SKELETON_POSITION_FOOT_LEFT];
+	KinectVector4 hipLeft = KinectVector4(skeleton.SkeletonPositions[NUI_SKELETON_POSITION_HIP_LEFT]);
+	KinectVector4 kneeLeft = KinectVector4(skeleton.SkeletonPositions[NUI_SKELETON_POSITION_KNEE_LEFT]);
+	KinectVector4 ankleLeft = KinectVector4(skeleton.SkeletonPositions[NUI_SKELETON_POSITION_ANKLE_LEFT]);
+	KinectVector4 footLeft = KinectVector4(skeleton.SkeletonPositions[NUI_SKELETON_POSITION_FOOT_LEFT]);
 
 	// Right Leg
-	Vector4 hipRight = skeleton.SkeletonPositions[NUI_SKELETON_POSITION_HIP_RIGHT];
-	Vector4 kneeRight = skeleton.SkeletonPositions[NUI_SKELETON_POSITION_KNEE_RIGHT];
-	Vector4 ankleRight = skeleton.SkeletonPositions[NUI_SKELETON_POSITION_ANKLE_RIGHT];
-	Vector4 footRight = skeleton.SkeletonPositions[NUI_SKELETON_POSITION_FOOT_RIGHT];
+	KinectVector4 hipRight = KinectVector4(skeleton.SkeletonPositions[NUI_SKELETON_POSITION_HIP_RIGHT]);
+	KinectVector4 kneeRight = KinectVector4(skeleton.SkeletonPositions[NUI_SKELETON_POSITION_KNEE_RIGHT]);
+	KinectVector4 ankleRight = KinectVector4(skeleton.SkeletonPositions[NUI_SKELETON_POSITION_ANKLE_RIGHT]);
+	KinectVector4 footRight = KinectVector4(skeleton.SkeletonPositions[NUI_SKELETON_POSITION_FOOT_RIGHT]);
 
 	bool torso = false, leftArm = false, rightArm = false, leftLeg = false, rightLeg = false;
 
 	// Torso
-	KinectVector4 hipToSpine = spine - hipCenter;
-	KinectVector4 hipToShoulder = shoulderCenter - hipCenter;
-	KinectVector4 SpineToShoulder = hipToSpine - hipToShoulder;
+	float angleHipCenter = (spine - hipCenter).angle(shoulderCenter - hipCenter) * 180.0 / PI;
+	float angleSpine = (hipCenter - spine).angle(shoulderCenter - spine) * 180.0 / PI;
+	float angleShoulderCenter = (hipCenter - shoulderCenter).angle(spine - shoulderCenter) * 180.0 / PI;
+	float angleHead = (shoulderCenter - head).angle(spine - head) * 180.0 / PI;
 
-	float angle = hipToSpine.angle(hipToShoulder);
-	qDebug() << "Angle Hip = " << angle << endl;
+	if ((angleHipCenter >= 0.0 && angleHipCenter <= 15.0) && (angleSpine >= 160.0 && angleSpine <= 180.0) && (angleShoulderCenter >= 0.0 && angleShoulderCenter <= 15.0) && (angleHead >= 0.0 && angleHead <= 15.0))
+	{
+		/*m_pKinectBVH->AddOffset(hipCenter);
+		m_pKinectBVH->AddOffset(spine);
+		m_pKinectBVH->AddOffset(shoulderCenter);
+		m_pKinectBVH->AddOffset(head);*/
+		torso = true;
+		qDebug() << "TORSO CALIBRATED" << endl;
+	}
 
-	angle = hipToSpine.angle(SpineToShoulder);
-	qDebug() << "Angle Spine = " << angle << endl;
+	// Left Arm
+	float angleShoulderLeft = (elbowLeft - shoulderLeft).angle(wristLeft - shoulderLeft) * 180.0 / PI;
+	float angleElbowLeft = (shoulderLeft - elbowLeft).angle(wristLeft - elbowLeft) * 180.0 / PI;
+	float angleWristLeft = (elbowLeft - wristLeft).angle(shoulderLeft - wristLeft) * 180.0 / PI;
+	float angleHandLeft = (elbowLeft - handLeft).angle(wristLeft - handLeft) * 180.0 / PI;
 
-	angle = SpineToShoulder.angle(hipToShoulder);
-	qDebug() << "Angle Shoulder = " << angle << endl;
+	if ((angleShoulderLeft >= 0.0 && angleShoulderLeft <= 15.0) && (angleElbowLeft >= 160.0 && angleElbowLeft <= 180.0) && (angleWristLeft >= 0.0 && angleWristLeft <= 15.0) && (angleHandLeft >= 0.0 && angleHandLeft <= 15.0))
+	{
+		/*m_pKinectBVH->AddOffset(angleShoulderLeft);
+		m_pKinectBVH->AddOffset(angleElbowLeft);
+		m_pKinectBVH->AddOffset(angleWristLeft);
+		m_pKinectBVH->AddOffset(angleHandLeft);*/
+		leftArm = true;
+		qDebug() << "LEFT ARM CALIBRATED" << endl;
+	}
 
-	// Right Arm
-	KinectVector4 shoulderToElbow = elbowRight - shoulderRight;
-	KinectVector4 shoulderToWrist = wristRight - shoulderRight;
-	KinectVector4 elbowToWrist = shoulderToElbow - shoulderToWrist;
+    // Right Arm
+	float angleShoulderRight = (elbowRight - shoulderRight).angle(wristRight - shoulderRight) * 180.0 / PI;
+	float angleElbowRight = (shoulderRight - elbowRight).angle(wristRight - elbowRight) * 180.0 / PI;
+	float angleWristRight = (elbowRight - wristRight).angle(shoulderRight - wristRight) * 180.0 / PI;
+	float angleHandRight = (elbowRight - handRight).angle(wristRight - handRight) * 180.0 / PI;
 
-	angle = shoulderToElbow.angle(shoulderToWrist);
-	qDebug() << "Angle Shoulder = " << angle << endl;
+	if ((angleShoulderRight >= 0.0 && angleShoulderRight <= 15.0) && (angleElbowRight >= 160.0 && angleElbowRight <= 180.0) && (angleWristRight >= 0.0 && angleWristRight <= 15.0) && (angleHandRight >= 0.0 && angleHandRight <= 15.0))
+	{
+		/*m_pKinectBVH->AddOffset(angleShoulderRight);
+		m_pKinectBVH->AddOffset(angleElbowRight);
+		m_pKinectBVH->AddOffset(angleWristRight);
+		m_pKinectBVH->AddOffset(angleHandRight);*/
+		rightArm = true;
+		qDebug() << "RIGHT ARM CALIBRATED" << endl;
+	}
 
-	angle = shoulderToElbow.angle(elbowToWrist);
-	qDebug() << "Angle Elbow = " << angle << endl;
+    // Left Leg
+	float angleHipLeft = (kneeLeft - hipLeft).angle(ankleLeft - hipLeft) * 180.0 / PI;
+	float angleKneeLeft = (hipLeft - kneeLeft).angle(ankleLeft - kneeLeft) * 180.0 / PI;
+	float angleAnkleLeft = (kneeLeft - ankleLeft).angle(hipLeft - ankleLeft) * 180.0 / PI;
+	float angleFootLeft = (kneeLeft - footLeft).angle(ankleLeft - footLeft) * 180.0 / PI;
 
-	angle = elbowToWrist.angle(shoulderToWrist);
-	qDebug() << "Angle Wrist = " << angle << endl;
+	if ((angleHipLeft >= 0.0 && angleHipLeft <= 15.0) && (angleKneeLeft >= 160.0 && angleKneeLeft <= 180.0) && (angleAnkleLeft >= 0.0 && angleAnkleLeft <= 15.0) && (angleFootLeft >= 0.0 && angleFootLeft <= 15.0))
+	{
+		/*m_pKinectBVH->AddOffset(angleHipLeft);
+		m_pKinectBVH->AddOffset(angleKneeLeft);
+		m_pKinectBVH->AddOffset(angleAnkleLeft);
+		m_pKinectBVH->AddOffset(angleFootLeft);*/
+		leftLeg = true;
+		qDebug() << "LEFT LEG CALIBRATED" << endl;
+	}
 
-	//qDebug() << "HIP CENTER (" << hipCenter.x << ", " << hipCenter.y << ", " << hipCenter.z << ")" << endl;
-	//qDebug() << "SPINE (" << spine.x << ", " << spine.y << ", " << spine.z << ")" << endl;
-	//if (hipCenter.x - 0.01f == spine.x  - 0.01f || hipCenter.x + 0.01f == spine.x  + 0.01f)
-	//{
-	//	qDebug() << "OK" << endl;
-	//	if (hipCenter.x == shoulderCenter.x && hipCenter.z == shoulderCenter.z)
-	//	{
-	//		if (hipCenter.x == head.x && hipCenter.z == head.z)
-	//		{
-	//			m_pKinectBVH->AddOffset(hipCenter);
-	//			m_pKinectBVH->AddOffset(spine);
-	//			m_pKinectBVH->AddOffset(shoulderCenter);
-	//			m_pKinectBVH->AddOffset(head);
-	//			torso = true;
-	//			OutputDebugString(L"TORSO CALIBRATED");
-	//		}
-	//	}
-	//}
+    // Right Leg
+    float angleHipRight = (kneeRight - hipRight).angle(ankleRight - hipRight) * 180.0 / PI;
+	float angleKneeRight = (hipRight - kneeRight).angle(ankleRight - kneeRight) * 180.0 / PI;
+	float angleAnkleRight = (kneeRight - ankleRight).angle(hipRight - ankleRight) * 180.0 / PI;
+	float angleFootRight = (kneeRight - footRight).angle(ankleRight - footRight) * 180.0 / PI;
 
-	//// Left Arm
-	//if (torso)
-	//{
-	//	if (shoulderCenter.y == shoulderLeft.y && shoulderCenter.z == shoulderLeft.z)
-	//	{
-	//		if (shoulderCenter.y == elbowLeft.y && shoulderCenter.z == elbowLeft.z)
-	//		{
-	//			if (shoulderCenter.y == wristLeft.y && shoulderCenter.z == wristLeft.z)
-	//			{
-	//				if (shoulderCenter.y == handLeft.y && shoulderCenter.z == handLeft.z)
-	//				{
-	//					m_pKinectBVH->AddOffset(shoulderLeft);
-	//					m_pKinectBVH->AddOffset(elbowLeft);
-	//					m_pKinectBVH->AddOffset(wristLeft);
-	//					m_pKinectBVH->AddOffset(handLeft);
-	//					leftArm = true;
-	//				}
-	//			}
-	//		}
-	//	}
-	//}
+	if ((angleHipRight >= 0.0 && angleHipRight <= 15.0) && (angleKneeRight >= 160.0 && angleKneeRight <= 180.0) && (angleAnkleRight >= 0.0 && angleAnkleRight <= 15.0) && (angleFootRight >= 0.0 && angleFootRight <= 15.0))
+	{
+		/*m_pKinectBVH->AddOffset(angleHipRight);
+		m_pKinectBVH->AddOffset(angleKneeRight);
+		m_pKinectBVH->AddOffset(angleAnkleRight);
+		m_pKinectBVH->AddOffset(angleFootRight);*/
+		rightLeg = true;
+		qDebug() << "RIGHT LEG CALIBRATED" << endl;
+	}
 
- //   // Right Arm
-	//if (torso && leftArm)
-	//{
-	//	if (shoulderCenter.y == shoulderRight.y && shoulderCenter.z == shoulderRight.z)
-	//	{
-	//		if (shoulderCenter.y == elbowRight.y && shoulderCenter.z == elbowRight.z)
-	//		{
-	//			if (shoulderCenter.y == wristRight.y && shoulderCenter.z == wristRight.z)
-	//			{
-	//				if (shoulderCenter.y == handRight.y && shoulderCenter.z == handRight.z)
-	//				{
-	//					m_pKinectBVH->AddOffset(shoulderRight);
-	//					m_pKinectBVH->AddOffset(elbowRight);
-	//					m_pKinectBVH->AddOffset(wristRight);
-	//					m_pKinectBVH->AddOffset(handRight);
-	//					rightArm = true;
-	//				}
-	//			}
-	//		}
-	//	}
-	//}
-
- //   // Left Leg
-	//if (torso && leftArm && rightArm)
-	//{
-	//	if (hipCenter.y == hipLeft.y && hipCenter.z == hipLeft.z)
-	//	{
-	//		if (hipLeft.x == kneeLeft.x && hipLeft.z == kneeLeft.z)
-	//		{
-	//			if (hipLeft.x == ankleLeft.x && hipLeft.z == ankleLeft.z)
-	//			{
-	//				if (hipLeft.x == footLeft.x && hipLeft.z == footLeft.z)
-	//				{
-	//					m_pKinectBVH->AddOffset(hipLeft);
-	//					m_pKinectBVH->AddOffset(kneeLeft);
-	//					m_pKinectBVH->AddOffset(ankleLeft);
-	//					m_pKinectBVH->AddOffset(footLeft);
-	//					leftLeg = true;
-	//				}
-	//			}
-	//		}
-	//	}
-	//}
-
- //   // Right Leg
- //   if (torso && leftArm && rightArm && leftLeg)
-	//{
-	//	if (hipCenter.y == hipRight.y && hipCenter.z == hipRight.z)
-	//	{
-	//		if (hipRight.x == kneeRight.x && hipRight.z == kneeRight.z)
-	//		{
-	//			if (hipRight.x == ankleRight.x && hipRight.z == ankleRight.z)
-	//			{
-	//				if (hipRight.x == footRight.x && hipRight.z == footRight.z)
-	//				{
-	//					m_pKinectBVH->AddOffset(hipRight);
-	//					m_pKinectBVH->AddOffset(kneeRight);
-	//					m_pKinectBVH->AddOffset(ankleRight);
-	//					m_pKinectBVH->AddOffset(footRight);
-	//					rightLeg = true;
-	//				}
-	//			}
-	//		}
-	//	}
-	//}
-
-	//if (torso && leftArm && rightArm && leftLeg && rightLeg)
-	//{
-	//	OutputDebugString(L"CALIBRATED");
-	//	m_bIsCalibrated = true;
-	//	return true;
-	//}
+	if (torso && leftArm && rightArm && leftLeg && rightLeg)
+	{
+		qDebug() << "CALIBRATED" << endl;
+		m_bIsCalibrated = true;
+		return true;
+	}
 	return false;
 }
 

@@ -67,7 +67,8 @@ const KinectVector4 &KinectVector4::normalize()
 
 float KinectVector4::length() const
 {
-	return sqrt(x() * x() + y() * y() + z() * z());
+	float temp = x() * x() + y() * y() + z() * z();
+	return sqrt(temp);
 }
 
 void KinectVector4::subtract(const KinectVector4 &b)
