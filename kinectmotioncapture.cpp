@@ -152,6 +152,8 @@ void KinectMotionCapture::EventSkeleton()
 			if (m_pKinectSkeleton->IsRecording() && !m_pKinectSkeleton->IsCalibrated())
 			{
 				m_pKinectSkeleton->CalibrateSkeleton(SkeletonFrame.SkeletonData[i]);
+				// Ajout de l'offset dans le bvh 
+				//m_pKinectSkeleton->getBVH()->AddMotionData(m_pKinectSkeleton->getBVH()->GetOffset());
 			}
         }
         else if (trackingState == NUI_SKELETON_POSITION_ONLY)
