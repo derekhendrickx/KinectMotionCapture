@@ -24,6 +24,7 @@ public:
 
 	inline bool IsRecording() { return m_bRecording; };
 	inline bool IsCalibrated() { return m_bIsCalibrated; };
+	inline KinectBVH* getBVH() { return m_pKinectBVH; };
 
 	void DrawSkeleton(const NUI_SKELETON_DATA &, int, int);
 	void Clear();

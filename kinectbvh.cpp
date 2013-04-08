@@ -202,7 +202,7 @@ void KinectBVH::AddFramePerSecond(float fps)
 	m_framePerSecond = fps;
 }
 
-void KinectBVH::AddMotionData(std::vector<KinectVector4> offsets)
+void KinectBVH::AddMotionFrame(std::vector<KinectVector4> offsets)
 {
 	if (m_initMotion)
 	{

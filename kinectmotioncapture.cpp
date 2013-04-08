@@ -56,9 +56,9 @@ void KinectMotionCapture::Initialize()
 	m_pKinectSkeleton = new KinectSkeleton(this, ui.skeleton, 320, 240);
 
 	/* Initialisation bvh */
-	m_pKinectSkeleton->getBVH().CreateBVHFile("test.bvh");
-	m_pKinectSkeleton->getBVH().AddFramePerSecond(0.033333);
-	m_pKinectSkeleton->getBVH().AddNbFrames(100);
+	m_pKinectSkeleton->getBVH()->CreateBVHFile("test.bvh");
+	m_pKinectSkeleton->getBVH()->AddFramePerSecond(0.033333);
+	m_pKinectSkeleton->getBVH()->AddNbFrames(100);
 	/*******/
 
 	m_pThread = new QThread;
@@ -121,7 +121,7 @@ void KinectMotionCapture::EventSkeleton()
             {
                 foundSkeleton = true;
                 //Initialisation de la position 0 du skeleton dans le bvh
-                m_pKinectSkeleton->getBVH().CreateSkeletonInformation(SkeletonFrame.SkeletonData[i]);
+                m_pKinectSkeleton->getBVH()->CreateSkeletonInformation(SkeletonFrame.SkeletonData[i]);
             }
         }
     }
@@ -177,7 +177,7 @@ void KinectMotionCapture::EventSkeleton()
     }
 
 	//Fermeture du fichier de sortie bvh
-	m_pKinectSkeleton->getBVH().~KinectBVH();
+	//m_pKinectSkeleton->getBVH().~KinectBVH();
 
     //UpdateTrackedSkeletons(SkeletonFrame);
 }
