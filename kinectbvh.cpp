@@ -5,7 +5,7 @@ KinectBVH::KinectBVH()
 	m_initMotion = false;
 	m_initHierarchy = false;
 	m_framePerSecond = NULL;
-	m_nbFrame = NULL;	
+	m_nbFrame = NULL;
 }
 
 KinectBVH::~KinectBVH()
@@ -17,7 +17,7 @@ KinectBVH::~KinectBVH()
 
 void KinectBVH::AddOffset(const KinectVector4 &vector)
 {
-	m_pBVH_s->offsets.push_back(vector);
+	//m_pBVH_s->offsets.push_back(vector);
 }
 
 bool KinectBVH::CreateBVHFile(QString filename)
