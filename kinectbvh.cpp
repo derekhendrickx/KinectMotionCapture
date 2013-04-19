@@ -15,175 +15,185 @@ KinectBVH::~KinectBVH()
 	m_pFile = NULL;
 }
 
-void KinectBVH::AddOffset(const KinectVector4 &vector)
+void KinectBVH::AddOffset(int i, const Vector4 &offset)
 {
-	//m_pBVH_s->offsets.push_back(vector);
+	m_aOffsets[i].x = offset.x * SCALE;
+	m_aOffsets[i].y = offset.y * SCALE;
+	m_aOffsets[i].z = offset.z * SCALE;
 }
 
 bool KinectBVH::CreateBVHFile(QString filename)
 {
-	// cr�ation d'un objet qfile
 	m_pFile = new QFile(filename);
-	// on ouvre notre fichier en lecture seule et on v�rifie l'ouverture
 	if (!m_pFile->open(QIODevice::Append | QIODevice::Text)) {
 		return false;
 	}
 	return true;
 }
 
-void KinectBVH::CreateSkeletonInformation(const NUI_SKELETON_DATA &skeleton)
+void KinectBVH::CreateSkeletonInformation()
 {
-	// cr�ation d'un objet qtextstream � partir de notre objet qfile
+	int i = 0;
 	QTextStream flux(m_pFile);
-	// on choisit le codec correspondant au jeu de caract�re que l'on souhaite ; ici, utf-8
 	flux.setCodec("utf-8");
 
 	// ROOT
 	flux << "HIERARCHY" << endl;
-	flux << "ROOT Hips" << endl;
+	flux << "ROOT Hip" << endl;
 	flux << "{" << endl;
 
-		// Chest
-		flux << "\tOFFSET 0.00 0.00 0.00" << endl;
+		// Spine
+		flux << "\tOFFSET " << m_aOffsets[0].x << " " << m_aOffsets[0].y << " " << m_aOffsets[0].z << endl;
 		flux << "\tCHANNELS 6 Xposition Yposition Zposition Zrotation Xrotation Yrotation" << endl;
-		flux << "\tJOINT Chest" << endl;
+		flux << "\tJOINT Spine" << endl;
 		flux << "\t{" << endl;
 
-			// Neck
-			flux << "\t\tOFFSET " << skeleton.SkeletonPositions[NUI_SKELETON_POSITION_SPINE].x << " " << skeleton.SkeletonPositions[NUI_SKELETON_POSITION_SPINE].y << " " << skeleton.SkeletonPositions[NUI_SKELETON_POSITION_SPINE].z << endl;
+			// Shoulder Center
+			flux << "\t\tOFFSET " << m_aOffsets[1].x - m_aOffsets[0].x << " " << m_aOffsets[1].y - m_aOffsets[0].y << " " << m_aOffsets[1].z - m_aOffsets[0].z << endl;
 			flux << "\t\tCHANNELS 3 Zrotation Xrotation Yrotation" << endl;
-			flux << "\t\tJOINT Neck" << endl;
+			flux << "\t\tJOINT ShoulderCenter" << endl;
 			flux << "\t\t{" << endl;
 				// Head
-				flux << "\t\t\tOFFSET " << skeleton.SkeletonPositions[NUI_SKELETON_POSITION_SHOULDER_CENTER].x << " " << skeleton.SkeletonPositions[NUI_SKELETON_POSITION_SHOULDER_CENTER].y << " " << skeleton.SkeletonPositions[NUI_SKELETON_POSITION_SHOULDER_CENTER].z << endl;
+				flux << "\t\t\tOFFSET " << m_aOffsets[2].x - m_aOffsets[1].x << " " << m_aOffsets[2].y - m_aOffsets[1].y << " " << m_aOffsets[2].z - m_aOffsets[1].z << endl;
 				flux << "\t\t\tCHANNELS 3 Zrotation Xrotation Yrotation" << endl;
 				flux << "\t\t\tJOINT Head" << endl;
 				flux << "\t\t\t{" << endl;
 					// End Site
-					flux << "\t\t\t\tOFFSET " << skeleton.SkeletonPositions[NUI_SKELETON_POSITION_HEAD].x << " " << skeleton.SkeletonPositions[NUI_SKELETON_POSITION_HEAD].y << " " << skeleton.SkeletonPositions[NUI_SKELETON_POSITION_HEAD].z << endl;
+					flux << "\t\t\t\tOFFSET " << m_aOffsets[3].x - m_aOffsets[2].x << " " << m_aOffsets[3].y - m_aOffsets[2].y << " " << m_aOffsets[3].z - m_aOffsets[2].z << endl;
 					flux << "\t\t\t\tCHANNELS 3 Zrotation Xrotation Yrotation" << endl;
 					flux << "\t\t\t\tEnd Site" << endl;
 					flux << "\t\t\t\t{" << endl;
-						flux << "\t\t\t\t\tOFFSET " << skeleton.SkeletonPositions[NUI_SKELETON_POSITION_HEAD].x << " " << skeleton.SkeletonPositions[NUI_SKELETON_POSITION_HEAD].y << " " << skeleton.SkeletonPositions[NUI_SKELETON_POSITION_HEAD].z << endl;
+						flux << "\t\t\t\t\tOFFSET 0.0 0.0 0.0" << endl;
 					flux << "\t\t\t\t}" << endl;
 				flux << "\t\t\t}" << endl;
-			flux << "\t\t}" << endl;
 
-			// Left Arm
-			flux << "\t\tJOINT LeftCollar" << endl;
-			flux << "\t\t{" << endl;
-				// Elbow Left
-				flux << "\t\t\tOFFSET " << skeleton.SkeletonPositions[NUI_SKELETON_POSITION_SHOULDER_LEFT].x << " " << skeleton.SkeletonPositions[NUI_SKELETON_POSITION_SHOULDER_LEFT].y << " " << skeleton.SkeletonPositions[NUI_SKELETON_POSITION_SHOULDER_LEFT].z << endl;
-				flux << "\t\t\tCHANNELS 3 Zrotation Xrotation Yrotation" << endl;
-				flux << "\t\t\tJOINT LeftUpArm" << endl;
+				// Shoulder Left
+				flux << "\t\t\tJOINT ShoulderLeft" << endl;
 				flux << "\t\t\t{" << endl;
-					// Wrist Left
-					flux << "\t\t\t\tOFFSET " << skeleton.SkeletonPositions[NUI_SKELETON_POSITION_ELBOW_LEFT].x << " " << skeleton.SkeletonPositions[NUI_SKELETON_POSITION_ELBOW_LEFT].y << " " << skeleton.SkeletonPositions[NUI_SKELETON_POSITION_ELBOW_LEFT].z << endl;
+					// Elbow Left
+					flux << "\t\t\t\tOFFSET " << m_aOffsets[4].x - m_aOffsets[2].x << " " << m_aOffsets[4].y - m_aOffsets[2].y << " " << m_aOffsets[4].z - m_aOffsets[2].z << endl;
 					flux << "\t\t\t\tCHANNELS 3 Zrotation Xrotation Yrotation" << endl;
-					flux << "\t\t\t\tJOINT LeftLowArm" << endl;
+					flux << "\t\t\t\tJOINT ElbowLeft" << endl;
 					flux << "\t\t\t\t{" << endl;
-						// Left Hand
-						flux << "\t\t\t\t\tOFFSET " << skeleton.SkeletonPositions[NUI_SKELETON_POSITION_WRIST_LEFT].x << " " << skeleton.SkeletonPositions[NUI_SKELETON_POSITION_WRIST_LEFT].y << " " << skeleton.SkeletonPositions[NUI_SKELETON_POSITION_WRIST_LEFT].z << endl;
+						// Wrist Left
+						flux << "\t\t\t\t\tOFFSET " << m_aOffsets[5].x - m_aOffsets[4].x << " " << m_aOffsets[5].y - m_aOffsets[4].y << " " << m_aOffsets[5].z - m_aOffsets[4].z << endl;
 						flux << "\t\t\t\t\tCHANNELS 3 Zrotation Xrotation Yrotation" << endl;
-						flux << "\t\t\t\t\tJOINT LeftHand" << endl;
+						flux << "\t\t\t\t\tJOINT WristLeft" << endl;
 						flux << "\t\t\t\t\t{" << endl;
-							// End Site
-							flux << "\t\t\t\t\t\tOFFSET " << skeleton.SkeletonPositions[NUI_SKELETON_POSITION_HAND_LEFT].x << " " << skeleton.SkeletonPositions[NUI_SKELETON_POSITION_HAND_LEFT].y << " " << skeleton.SkeletonPositions[NUI_SKELETON_POSITION_HAND_LEFT].z << endl;
+							// Hand Left
+							flux << "\t\t\t\t\t\tOFFSET " << m_aOffsets[6].x - m_aOffsets[5].x << " " << m_aOffsets[6].y - m_aOffsets[5].y << " " << m_aOffsets[6].z - m_aOffsets[5].z << endl;
 							flux << "\t\t\t\t\t\tCHANNELS 3 Zrotation Xrotation Yrotation" << endl;
-							flux << "\t\t\t\t\t\tEnd Site" << endl;
+							flux << "\t\t\t\t\t\tJOINT HandLeft" << endl;
 							flux << "\t\t\t\t\t\t{" << endl;
-								flux << "\t\t\t\t\t\t\tOFFSET " << skeleton.SkeletonPositions[NUI_SKELETON_POSITION_HAND_LEFT].x << " " << skeleton.SkeletonPositions[NUI_SKELETON_POSITION_HAND_LEFT].y << " " << skeleton.SkeletonPositions[NUI_SKELETON_POSITION_HAND_LEFT].z << endl;
+								// End Site
+								flux << "\t\t\t\t\t\t\tOFFSET " << m_aOffsets[7].x - m_aOffsets[6].x << " " << m_aOffsets[7].y - m_aOffsets[6].y << " " << m_aOffsets[7].z - m_aOffsets[6].z << endl;
+								flux << "\t\t\t\t\t\t\tCHANNELS 3 Zrotation Xrotation Yrotation" << endl;
+								flux << "\t\t\t\t\t\t\tEnd Site" << endl;
+								flux << "\t\t\t\t\t\t\t{" << endl;
+									flux << "\t\t\t\t\t\t\t\tOFFSET 0.0 0.0 0.0" << endl;
+								flux << "\t\t\t\t\t\t\t}" << endl;
 							flux << "\t\t\t\t\t\t}" << endl;
 						flux << "\t\t\t\t\t}" << endl;
 					flux << "\t\t\t\t}" << endl;
 				flux << "\t\t\t}" << endl;
-			flux << "\t\t}" << endl;
 
-			// Right Arm
-			flux << "\t\tJOINT RightCollar" << endl;
-			flux << "\t\t{" << endl;
-				// Elbow Right
-				flux << "\t\t\tOFFSET " << skeleton.SkeletonPositions[NUI_SKELETON_POSITION_SHOULDER_RIGHT].x << " " << skeleton.SkeletonPositions[NUI_SKELETON_POSITION_SHOULDER_RIGHT].y << " " << skeleton.SkeletonPositions[NUI_SKELETON_POSITION_SHOULDER_RIGHT].z << endl;
-				flux << "\t\t\tCHANNELS 3 Zrotation Xrotation Yrotation" << endl;
-				flux << "\t\t\tJOINT LeftUpArm" << endl;
+				// Shoulder Right
+				flux << "\t\t\tJOINT ShoulderRight" << endl;
 				flux << "\t\t\t{" << endl;
-					// Wrist Right
-					flux << "\t\t\t\tOFFSET " << skeleton.SkeletonPositions[NUI_SKELETON_POSITION_ELBOW_RIGHT].x << " " << skeleton.SkeletonPositions[NUI_SKELETON_POSITION_ELBOW_RIGHT].y << " " << skeleton.SkeletonPositions[NUI_SKELETON_POSITION_ELBOW_RIGHT].z << endl;
+					// Elbow Right
+					flux << "\t\t\t\tOFFSET " << m_aOffsets[8].x - m_aOffsets[2].x << " " << m_aOffsets[8].y - m_aOffsets[2].y << " " << m_aOffsets[8].z - m_aOffsets[2].z << endl;
 					flux << "\t\t\t\tCHANNELS 3 Zrotation Xrotation Yrotation" << endl;
-					flux << "\t\t\t\tJOINT LeftLowArm" << endl;
+					flux << "\t\t\t\tJOINT ElbowRight" << endl;
 					flux << "\t\t\t\t{" << endl;
-						// Right Hand
-						flux << "\t\t\t\t\tOFFSET " << skeleton.SkeletonPositions[NUI_SKELETON_POSITION_WRIST_RIGHT].x << " " << skeleton.SkeletonPositions[NUI_SKELETON_POSITION_WRIST_RIGHT].y << " " << skeleton.SkeletonPositions[NUI_SKELETON_POSITION_WRIST_RIGHT].z << endl;
+						// Wrist Right
+						flux << "\t\t\t\t\tOFFSET " << m_aOffsets[9].x - m_aOffsets[8].x << " " << m_aOffsets[9].y - m_aOffsets[8].y << " " << m_aOffsets[9].z - m_aOffsets[8].z << endl;
 						flux << "\t\t\t\t\tCHANNELS 3 Zrotation Xrotation Yrotation" << endl;
-						flux << "\t\t\t\t\tJOINT LeftHand" << endl;
+						flux << "\t\t\t\t\tJOINT WristRight" << endl;
 						flux << "\t\t\t\t\t{" << endl;
-							// End Site
-							flux << "\t\t\t\t\t\tOFFSET " << skeleton.SkeletonPositions[NUI_SKELETON_POSITION_HAND_RIGHT].x << " " << skeleton.SkeletonPositions[NUI_SKELETON_POSITION_HAND_RIGHT].y << " " << skeleton.SkeletonPositions[NUI_SKELETON_POSITION_HAND_RIGHT].z << endl;
+							// Hand Right
+							flux << "\t\t\t\t\t\tOFFSET " << m_aOffsets[10].x - m_aOffsets[9].x << " " << m_aOffsets[10].y - m_aOffsets[9].y << " " << m_aOffsets[10].z - m_aOffsets[9].z << endl;
 							flux << "\t\t\t\t\t\tCHANNELS 3 Zrotation Xrotation Yrotation" << endl;
-							flux << "\t\t\t\t\t\tEnd Site" << endl;
+							flux << "\t\t\t\t\t\tJOINT HandRight" << endl;
 							flux << "\t\t\t\t\t\t{" << endl;
-								flux << "\t\t\t\t\t\t\tOFFSET " << skeleton.SkeletonPositions[NUI_SKELETON_POSITION_HAND_RIGHT].x << " " << skeleton.SkeletonPositions[NUI_SKELETON_POSITION_HAND_RIGHT].y << " " << skeleton.SkeletonPositions[NUI_SKELETON_POSITION_HAND_RIGHT].z << endl;
+								// End Site
+								flux << "\t\t\t\t\t\t\tOFFSET " << m_aOffsets[11].x - m_aOffsets[10].x << " " << m_aOffsets[11].y - m_aOffsets[10].y << " " << m_aOffsets[11].z - m_aOffsets[10].z << endl;
+								flux << "\t\t\t\t\t\t\tCHANNELS 3 Zrotation Xrotation Yrotation" << endl;
+								flux << "\t\t\t\t\t\t\tEnd Site" << endl;
+								flux << "\t\t\t\t\t\t\t{" << endl;
+									flux << "\t\t\t\t\t\t\t\tOFFSET 0.0 0.0 0.0" << endl;
+								flux << "\t\t\t\t\t\t\t}" << endl;
 							flux << "\t\t\t\t\t\t}" << endl;
 						flux << "\t\t\t\t\t}" << endl;
 					flux << "\t\t\t\t}" << endl;
 				flux << "\t\t\t}" << endl;
+			
 			flux << "\t\t}" << endl;
 
 		flux << "\t}" << endl;
 
-		// Left Leg
-		flux << "\tJOINT LeftUpLeg" << endl;
+		// Hip Left
+		flux << "\tJOINT HipLeft" << endl;
 		flux << "\t{" << endl;
 
-			// Hip Left
-			flux << "\t\tOFFSET " << skeleton.SkeletonPositions[NUI_SKELETON_POSITION_HIP_LEFT].x << " " << skeleton.SkeletonPositions[NUI_SKELETON_POSITION_HIP_LEFT].y << " " << skeleton.SkeletonPositions[NUI_SKELETON_POSITION_HIP_LEFT].z << endl;
+			// Knee Left
+			flux << "\t\tOFFSET " << m_aOffsets[12].x - m_aOffsets[0].x << " " << m_aOffsets[12].y - m_aOffsets[0].y << " " << m_aOffsets[12].z - m_aOffsets[0].z << endl;
 			flux << "\t\tCHANNELS 3 Zrotation Xrotation Yrotation" << endl;
-			flux << "\t\tJOINT LeftLowLeg" << endl;
+			flux << "\t\tJOINT KneeLeft" << endl;
 			flux << "\t\t{" << endl;
 
-				// Knee Left
-				flux << "\t\t\tOFFSET " << skeleton.SkeletonPositions[NUI_SKELETON_POSITION_KNEE_LEFT].x << " " << skeleton.SkeletonPositions[NUI_SKELETON_POSITION_KNEE_LEFT].y << " " << skeleton.SkeletonPositions[NUI_SKELETON_POSITION_KNEE_LEFT].z << endl;
+				// Ankle Left
+				flux << "\t\t\tOFFSET " << m_aOffsets[13].x - m_aOffsets[12].x << " " << m_aOffsets[13].y - m_aOffsets[12].y << " " << m_aOffsets[13].z - m_aOffsets[12].z << endl;
 				flux << "\t\t\tCHANNELS 3 Zrotation Xrotation Yrotation" << endl;
-				flux << "\t\t\tJOINT LeftFoot" << endl;
+				flux << "\t\t\tJOINT AnkleLeft" << endl;
 				flux << "\t\t\t{" << endl;
 
-					// Left Foot
-				flux << "\t\t\t\tOFFSET " << skeleton.SkeletonPositions[NUI_SKELETON_POSITION_FOOT_LEFT].x << " " << skeleton.SkeletonPositions[NUI_SKELETON_POSITION_FOOT_LEFT].y << " " << skeleton.SkeletonPositions[NUI_SKELETON_POSITION_FOOT_LEFT].z << endl;
+					// Foot Left
+					flux << "\t\t\t\tOFFSET " << m_aOffsets[14].x - m_aOffsets[13].x << " " << m_aOffsets[14].y - m_aOffsets[13].y << " " << m_aOffsets[14].z - m_aOffsets[13].z << endl;
 					flux << "\t\t\t\tCHANNELS 3 Zrotation Xrotation Yrotation" << endl;
-					flux << "\t\t\t\tEnd Site" << endl;
+					flux << "\t\t\t\tJOINT FootLeft" << endl;
 					flux << "\t\t\t\t{" << endl;
-
+					
 						// End Site
-						flux << "\t\t\t\t\tOFFSET " << skeleton.SkeletonPositions[NUI_SKELETON_POSITION_FOOT_LEFT].x << " " << skeleton.SkeletonPositions[NUI_SKELETON_POSITION_FOOT_LEFT].y << " " << skeleton.SkeletonPositions[NUI_SKELETON_POSITION_FOOT_LEFT].z << endl;
+						flux << "\t\t\t\t\tOFFSET " << m_aOffsets[15].x - m_aOffsets[14].x << " " << m_aOffsets[15].y - m_aOffsets[14].y << " " << m_aOffsets[15].z - m_aOffsets[14].z << endl;
+						flux << "\t\t\t\t\tCHANNELS 3 Zrotation Xrotation Yrotation" << endl;
+						flux << "\t\t\t\t\tEnd Site" << endl;
+						flux << "\t\t\t\t\t{" << endl;
+							flux << "\t\t\t\t\t\tOFFSET 0.0 0.0 0.0" << endl;
+						flux << "\t\t\t\t\t}" << endl;	
 					flux << "\t\t\t\t}" << endl;
 				flux << "\t\t\t}" << endl;
 			flux << "\t\t}" << endl;
 		flux << "\t}" << endl;
 
-		// Right Leg
-		flux << "\tJOINT RightUpLeg" << endl;
+		// Hip Right
+		flux << "\tJOINT HipRight" << endl;
 		flux << "\t{" << endl;
 
-			// Hip Right
-			flux << "\t\tOFFSET " << skeleton.SkeletonPositions[NUI_SKELETON_POSITION_HIP_RIGHT].x << " " << skeleton.SkeletonPositions[NUI_SKELETON_POSITION_HIP_RIGHT].y << " " << skeleton.SkeletonPositions[NUI_SKELETON_POSITION_HIP_RIGHT].z << endl;
+			// Knee Right
+			flux << "\t\tOFFSET " << m_aOffsets[16].x - m_aOffsets[0].x << " " << m_aOffsets[16].y - m_aOffsets[0].y << " " << m_aOffsets[16].z - m_aOffsets[0].z << endl;
 			flux << "\t\tCHANNELS 3 Zrotation Xrotation Yrotation" << endl;
-			flux << "\t\tJOINT RightLowLeg" << endl;
+			flux << "\t\tJOINT KneeRight" << endl;
 			flux << "\t\t{" << endl;
 
-				// Knee Right
-				flux << "\t\t\tOFFSET " << skeleton.SkeletonPositions[NUI_SKELETON_POSITION_KNEE_RIGHT].x << " " << skeleton.SkeletonPositions[NUI_SKELETON_POSITION_KNEE_RIGHT].y << " " << skeleton.SkeletonPositions[NUI_SKELETON_POSITION_KNEE_RIGHT].z << endl;
+				// Ankle Right
+				flux << "\t\t\tOFFSET " << m_aOffsets[17].x - m_aOffsets[16].x << " " << m_aOffsets[17].y - m_aOffsets[16].y << " " << m_aOffsets[17].z - m_aOffsets[16].z << endl;
 				flux << "\t\t\tCHANNELS 3 Zrotation Xrotation Yrotation" << endl;
-				flux << "\t\t\tJOINT RightFoot" << endl;
+				flux << "\t\t\tJOINT AnkleRight" << endl;
 				flux << "\t\t\t{" << endl;
 
-					// Right Foot
-				flux << "\t\t\t\tOFFSET " << skeleton.SkeletonPositions[NUI_SKELETON_POSITION_FOOT_RIGHT].x << " " << skeleton.SkeletonPositions[NUI_SKELETON_POSITION_FOOT_RIGHT].y << " " << skeleton.SkeletonPositions[NUI_SKELETON_POSITION_FOOT_RIGHT].z << endl;
+					// Foot Right
+					flux << "\t\t\t\tOFFSET " << m_aOffsets[18].x - m_aOffsets[17].x << " " << m_aOffsets[18].y - m_aOffsets[17].y << " " << m_aOffsets[18].z - m_aOffsets[17].z << endl;
 					flux << "\t\t\t\tCHANNELS 3 Zrotation Xrotation Yrotation" << endl;
-					flux << "\t\t\t\tEnd Site" << endl;
+					flux << "\t\t\t\tJOINT FootRight" << endl;
 					flux << "\t\t\t\t{" << endl;
-
+					
 						// End Site
-						flux << "\t\t\t\t\tOFFSET " << skeleton.SkeletonPositions[NUI_SKELETON_POSITION_FOOT_RIGHT].x << " " << skeleton.SkeletonPositions[NUI_SKELETON_POSITION_FOOT_RIGHT].y << " " << skeleton.SkeletonPositions[NUI_SKELETON_POSITION_FOOT_RIGHT].z << endl;
+						flux << "\t\t\t\t\tOFFSET " << m_aOffsets[19].x - m_aOffsets[18].x << " " << m_aOffsets[19].y - m_aOffsets[18].y << " " << m_aOffsets[19].z - m_aOffsets[18].z << endl;
+						flux << "\t\t\t\t\tCHANNELS 3 Zrotation Xrotation Yrotation" << endl;
+						flux << "\t\t\t\t\tEnd Site" << endl;
+						flux << "\t\t\t\t\t{" << endl;
+							flux << "\t\t\t\t\t\tOFFSET 0.0 0.0 0.0" << endl;
+						flux << "\t\t\t\t\t}" << endl;	
 					flux << "\t\t\t\t}" << endl;
 				flux << "\t\t\t}" << endl;
 			flux << "\t\t}" << endl;
@@ -202,46 +212,41 @@ void KinectBVH::AddFramePerSecond(float fps)
 	m_framePerSecond = fps;
 }
 
-void KinectBVH::AddMotionFrame(std::vector<KinectVector4> offsets)
+void KinectBVH::AddMotionFrame(const Matrix4 &rotationMatrix)
 {
-	if (m_initMotion)
-	{
-		// création d'un objet qtextstream à partir de notre objet qfile
-		QTextStream flux(m_pFile);
-		// on choisit le codec correspondant au jeu de caractère que l'on souhaite ; ici, utf-8
-		flux.setCodec("utf-8");
+	//if (m_initMotion)
+	//{
+	//	// création d'un objet qtextstream à partir de notre objet qfile
+	//	QTextStream flux(m_pFile);
+	//	// on choisit le codec correspondant au jeu de caractère que l'on souhaite ; ici, utf-8
+	//	flux.setCodec("utf-8");
 
-		// on ajoute la motion courant dans le fichier bvh 
-		for (unsigned i=0; i<offsets.size();i++)
-		{
-			flux << offsets[i].x() << "\t";
-			flux << offsets[i].y() << "\t";
-			flux << offsets[i].z() << "\t";
-		}
-		flux << endl;
+	//	// on ajoute la motion courant dans le fichier bvh 
+	//	for (unsigned i=0; i<offsets.size();i++)
+	//	{
+	//		flux << offsets[i].x() << "\t";
+	//		flux << offsets[i].y() << "\t";
+	//		flux << offsets[i].z() << "\t";
+	//	}
+	//	flux << endl;
 
-		// on vide le buffer correspondant à la motion courante
-		offsets.clear();
-	}
+	//	// on vide le buffer correspondant à la motion courante
+	//	offsets.clear();
+	//}
+
+	m_vMotionData.push_back(rotationMatrix);
 }
 
 void KinectBVH::InitMotion()
 {
 	if (m_nbFrame != NULL && m_framePerSecond != NULL && m_initHierarchy)
 	{
-		// création d'un objet qtextstream à partir de notre objet qfile
 		QTextStream flux(m_pFile);
-		// on choisit le codec correspondant au jeu de caractère que l'on souhaite ; ici, utf-8
 		flux.setCodec("utf-8");
 
-		flux << "MOTION" << endl;
-		flux << "Frames:   " << m_nbFrame << endl;
+		flux << "\nMOTION" << endl;
+		flux << "Frames: " << m_nbFrame << endl;
 		flux << "Frame Time: " << m_framePerSecond << endl;
 		m_initMotion = true;
 	}
-}
-
-std::vector<KinectVector4> KinectBVH::GetOffset()
-{
-	return m_pBVH_s->offsets;
 }

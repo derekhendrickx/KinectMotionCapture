@@ -86,9 +86,6 @@
     <ClCompile Include="GeneratedFiles\Release\moc_kinectbvh.cpp">
       <Filter>Generated Files\Release</Filter>
     </ClCompile>
-    <ClCompile Include="kinectvector4.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <CustomBuild Include="kinectmotioncapture.h">
@@ -116,9 +113,6 @@
   <ItemGroup>
     <ClInclude Include="GeneratedFiles\ui_kinectmotioncapture.h">
       <Filter>Generated Files</Filter>
-    </ClInclude>
-    <ClInclude Include="kinectvector4.h">
-      <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>

@@ -1,6 +1,8 @@
 #ifndef KINECTBVH_H
 #define KINECTBVH_H
 
+#define SCALE 100
+
 #include <QObject>
 #include <QFile>
 #include <QTextStream>
@@ -10,11 +12,7 @@
 #include <NuiApi.h>
 #include <vector>
 
-#include "kinectvector4.h"
-
-struct bvh_s {
-	std::vector<KinectVector4> offsets;
-};
+using namespace std;
 
 class KinectBVH : public QObject
 {
@@ -22,21 +20,22 @@ class KinectBVH : public QObject
 
 public:
 	KinectBVH();
+	KinectBVH(int);
 	~KinectBVH();
 
-	void AddOffset(const KinectVector4 &);
-	void AddMotionFrame(std::vector<KinectVector4> offsets);
+	void AddOffset(int, const Vector4 &);
+	void AddMotionFrame(const Matrix4 &);
 	void AddFramePerSecond(float fps);
 	void AddNbFrames(int nbFrames);
 	bool CreateBVHFile(QString);
-	void CreateSkeletonInformation(const NUI_SKELETON_DATA &);
+	void CreateSkeletonInformation();
 	void InitMotion();
-	std::vector<KinectVector4> GetOffset();
 private:
 	QFile *m_pFile;
 	QString m_vFileName;
 
-	bvh_s *m_pBVH_s;
+	Vector4 m_aOffsets[20];
+	vector<Matrix4> m_vMotionData;
 	float m_framePerSecond;
 	int m_nbFrame;
 	bool m_initMotion;

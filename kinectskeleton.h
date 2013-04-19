@@ -10,7 +10,6 @@
 #include <NuiApi.h>
 
 #include "kinectbvh.h"
-#include "kinectvector4.h"
 
 static const qreal g_JointThickness = 3.0f;
 
@@ -29,7 +28,7 @@ public:
 	void DrawSkeleton(const NUI_SKELETON_DATA &, int, int);
 	void Clear();
 
-	bool CalibrateSkeleton(const NUI_SKELETON_DATA &);
+	void CalibrateSkeleton(const NUI_SKELETON_DATA &);
 
 public slots:
 	void StartRecording();
