@@ -32,18 +32,20 @@ void KinectSkeleton::StartRecording()
 	}
 	else {
 		m_bRecording = false;
+		m_pKinectBVH->FillBVHFile();
 	}
 }
 
 void KinectSkeleton::CalibrateSkeleton(const NUI_SKELETON_DATA &skeleton)
 {
-	for (int i = 0; i < NUI_SKELETON_POSITION_COUNT; i++) {
-		m_pKinectBVH->AddOffset(i, skeleton.SkeletonPositions[i]);
-	}
+	if (m_pKinectBVH->CreateBVHFile(QString("test.bvh")))
+	{
+		for (int i = 0; i < NUI_SKELETON_POSITION_COUNT; i++) {
+			m_pKinectBVH->AddOffset(i, skeleton.SkeletonPositions[i]);
+		}
 
-	m_bIsCalibrated = true;
-	m_pKinectBVH->CreateBVHFile(QString("test.bvh"));
-	m_pKinectBVH->CreateSkeletonInformation();
+		m_bIsCalibrated = true;
+	}
 }
 
 QPointF KinectSkeleton::SkeletonToScreen(Vector4 skeletonPoint, int width, int height)
@@ -110,13 +112,11 @@ void KinectSkeleton::DrawSkeleton(const NUI_SKELETON_DATA &skel, int windowWidth
 			NUI_SKELETON_BONE_ORIENTATION boneOrientations[NUI_SKELETON_POSITION_COUNT];
 			NuiSkeletonCalculateBoneOrientations(&skel, boneOrientations);
 
+			m_pKinectBVH->AddPosition(skel.SkeletonPositions[NUI_SKELETON_POSITION_HIP_CENTER]);
 			for(int j = 0; j < NUI_SKELETON_POSITION_COUNT; j++){
 				m_pKinectBVH->AddMotionFrame(boneOrientations[j].hierarchicalRotation.rotationMatrix);
 			}
-
-			/*hip_position[numFrame].x = nuiSkeletonFrame.SkeletonData[i].SkeletonPositions[NUI_SKELETON_POSITION_HIP_CENTER].x;
-			hip_position[numFrame].y = nuiSkeletonFrame.SkeletonData[i].SkeletonPositions[NUI_SKELETON_POSITION_HIP_CENTER].y;
-			hip_position[numFrame].z = nuiSkeletonFrame.SkeletonData[i].SkeletonPositions[NUI_SKELETON_POSITION_HIP_CENTER].z;*/
+			m_pKinectBVH->IncrementNbFrames();
 		}
 	}
 

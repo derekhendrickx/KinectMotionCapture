@@ -2,6 +2,8 @@
 #define KINECTBVH_H
 
 #define SCALE 100
+#define FPS 0.033333
+#define PI 3.14159265
 
 #include <QObject>
 #include <QFile>
@@ -11,6 +13,7 @@
 #include <windows.h>
 #include <NuiApi.h>
 #include <vector>
+#include <map>
 
 using namespace std;
 
@@ -25,21 +28,22 @@ public:
 
 	void AddOffset(int, const Vector4 &);
 	void AddMotionFrame(const Matrix4 &);
-	void AddFramePerSecond(float fps);
-	void AddNbFrames(int nbFrames);
+	void AddPosition(const Vector4 &);
+	void IncrementNbFrames();
 	bool CreateBVHFile(QString);
-	void CreateSkeletonInformation();
-	void InitMotion();
+	void FillBVHFile();
 private:
 	QFile *m_pFile;
 	QString m_vFileName;
 
 	Vector4 m_aOffsets[20];
+	vector<Vector4> m_vPositions;
 	vector<Matrix4> m_vMotionData;
-	float m_framePerSecond;
+
 	int m_nbFrame;
-	bool m_initMotion;
-	bool m_initHierarchy;
+
+	void CreateSkeletonInformation();
+	void CreateMotionInformation();
 };
 
 #endif // KINECTBVH_H

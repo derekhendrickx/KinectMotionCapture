@@ -2,10 +2,7 @@
 
 KinectBVH::KinectBVH()
 {
-	m_initMotion = false;
-	m_initHierarchy = false;
-	m_framePerSecond = NULL;
-	m_nbFrame = NULL;
+	m_nbFrame = 0;
 }
 
 KinectBVH::~KinectBVH()
@@ -19,7 +16,7 @@ void KinectBVH::AddOffset(int i, const Vector4 &offset)
 {
 	m_aOffsets[i].x = offset.x * SCALE;
 	m_aOffsets[i].y = offset.y * SCALE;
-	m_aOffsets[i].z = offset.z * SCALE;
+	m_aOffsets[i].z = -offset.z * SCALE;
 }
 
 bool KinectBVH::CreateBVHFile(QString filename)
@@ -31,9 +28,14 @@ bool KinectBVH::CreateBVHFile(QString filename)
 	return true;
 }
 
+void KinectBVH::FillBVHFile()
+{
+	CreateSkeletonInformation();
+	CreateMotionInformation();
+}
+
 void KinectBVH::CreateSkeletonInformation()
 {
-	int i = 0;
 	QTextStream flux(m_pFile);
 	flux.setCodec("utf-8");
 
@@ -202,51 +204,57 @@ void KinectBVH::CreateSkeletonInformation()
 	flux << "}" << endl;
 }
 
-void KinectBVH::AddNbFrames(int nbFrames)
+void KinectBVH::IncrementNbFrames()
 {
-	m_nbFrame = nbFrames;
-}
-
-void KinectBVH::AddFramePerSecond(float fps)
-{
-	m_framePerSecond = fps;
+	++m_nbFrame;
 }
 
 void KinectBVH::AddMotionFrame(const Matrix4 &rotationMatrix)
 {
-	//if (m_initMotion)
-	//{
-	//	// création d'un objet qtextstream à partir de notre objet qfile
-	//	QTextStream flux(m_pFile);
-	//	// on choisit le codec correspondant au jeu de caractère que l'on souhaite ; ici, utf-8
-	//	flux.setCodec("utf-8");
-
-	//	// on ajoute la motion courant dans le fichier bvh 
-	//	for (unsigned i=0; i<offsets.size();i++)
-	//	{
-	//		flux << offsets[i].x() << "\t";
-	//		flux << offsets[i].y() << "\t";
-	//		flux << offsets[i].z() << "\t";
-	//	}
-	//	flux << endl;
-
-	//	// on vide le buffer correspondant à la motion courante
-	//	offsets.clear();
-	//}
-
 	m_vMotionData.push_back(rotationMatrix);
 }
 
-void KinectBVH::InitMotion()
+void KinectBVH::AddPosition(const Vector4 &position)
 {
-	if (m_nbFrame != NULL && m_framePerSecond != NULL && m_initHierarchy)
-	{
-		QTextStream flux(m_pFile);
-		flux.setCodec("utf-8");
+	Vector4 pos;
+	pos.x = position.x * SCALE;
+	pos.y = position.y * SCALE;
+	pos.z = -position.z * SCALE;
+	pos.w = position.w;
+	m_vPositions.push_back(pos);
+}
 
-		flux << "\nMOTION" << endl;
-		flux << "Frames: " << m_nbFrame << endl;
-		flux << "Frame Time: " << m_framePerSecond << endl;
-		m_initMotion = true;
+void KinectBVH::CreateMotionInformation()
+{
+	// Euler angles: head (Y), pitch (X) & roll (Z)
+	float rotX, rotY, rotZ;
+	QTextStream flux(m_pFile);
+	flux.setCodec("utf-8");
+
+	flux << "\nMOTION" << endl;
+	flux << "Frames: " << m_nbFrame << endl;
+	flux << "Frame Time: " << FPS << endl;
+
+	for (int i = 0; i < m_vPositions.size(); i++) {
+		flux << "" << m_vPositions[i].x << " " << m_vPositions[i].y << " " << m_vPositions[i].z << " ";
+		for(int j = i * NUI_SKELETON_POSITION_COUNT; j < (i * NUI_SKELETON_POSITION_COUNT) + NUI_SKELETON_POSITION_COUNT; j++) {
+			// Convertion left handed to right handed
+			m_vMotionData[j].M13 = -m_vMotionData[j].M13;
+			m_vMotionData[j].M23 = -m_vMotionData[j].M23;
+			m_vMotionData[j].M31 = -m_vMotionData[j].M31;
+			m_vMotionData[j].M32 = -m_vMotionData[j].M32;
+
+			rotX = asin(m_vMotionData[j].M32);
+			rotX = (rotX * 180) / PI;
+			rotY = atan2(-m_vMotionData[j].M31, m_vMotionData[j].M33);
+			rotY = (rotY * 180) / PI;
+			rotZ = atan2(-m_vMotionData[j].M12, m_vMotionData[j].M22);
+			rotZ = (rotZ * 180) / PI;
+			flux << rotZ << " " << rotX << " " << rotY << " ";
+		}
+		flux << endl;
 	}
+
+	m_vPositions.clear();
+	m_vMotionData.clear();
 }
