@@ -3,6 +3,7 @@
 #include <QObject>
 
 #include <iostream>
+#include <vld.h>
 
 using namespace std;
 
@@ -10,9 +11,7 @@ KinectMotionCapture::KinectMotionCapture(QWidget *parent)
 	: QMainWindow(parent)
 {
 	ui.setupUi(this);
-	m_bVideoStreamOpened = false;
 	m_bSkeletonTracking = false;
-	m_pKinectVideo = NULL;
 	m_pKinectSkeleton = NULL;
 	m_pKinectThread = NULL;
 	m_pThread = NULL;
@@ -21,7 +20,17 @@ KinectMotionCapture::KinectMotionCapture(QWidget *parent)
 
 KinectMotionCapture::~KinectMotionCapture()
 {
-	delete m_pKinectVideo;
+	if (m_pNuiSensor)
+	{
+		m_pNuiSensor->NuiShutdown();
+	}
+	if (m_hNextSkeletonEvent && (m_hNextSkeletonEvent != INVALID_HANDLE_VALUE))
+	{
+		CloseHandle(m_hNextSkeletonEvent);
+		m_hNextSkeletonEvent = NULL;
+	}
+	//SafeRelease(m_pNuiSensor);
+
 	delete m_pKinectSkeleton;
 	delete m_pKinectThread;
 	delete m_pThread;
@@ -29,75 +38,42 @@ KinectMotionCapture::~KinectMotionCapture()
 
 void KinectMotionCapture::Initialize()
 {
-	HRESULT hr;
-
-	hr = NuiInitialize(NUI_INITIALIZE_FLAG_USES_COLOR | NUI_INITIALIZE_FLAG_USES_DEPTH_AND_PLAYER_INDEX | NUI_INITIALIZE_FLAG_USES_SKELETON);
+	HRESULT hr = NuiInitialize(NUI_INITIALIZE_FLAG_USES_COLOR | NUI_INITIALIZE_FLAG_USES_DEPTH_AND_PLAYER_INDEX | NUI_INITIALIZE_FLAG_USES_SKELETON);
 	if (FAILED(hr)) {
 		QMessageBox::warning(this, "Error", "Kinect cannot be initialized.");
 		return;
 	}
 
-	m_hNextVideoFrameEvent = CreateEvent(NULL, TRUE, FALSE, NULL);	
-	hr = NuiImageStreamOpen(NUI_IMAGE_TYPE_COLOR,NUI_IMAGE_RESOLUTION_640x480,0,2,	m_hNextVideoFrameEvent, &m_videoStream);
-	if (FAILED(hr)) {
-		QMessageBox::warning(this, "Error", "Video cannot be initialized.");
-		return;
+	m_bSkeletonTracking = InitializeSkeletonTracking();
+	if (m_bSkeletonTracking) {
+		m_pKinectSkeleton = new KinectSkeleton(this, ui.skeleton);
+
+		m_pThread = new QThread;
+		m_pKinectThread = new KinectThread();
+		m_pKinectThread->SkeletonHandles(m_hNextSkeletonEvent);
+		m_pKinectThread->moveToThread(m_pThread);
+
+		connect(m_pThread, SIGNAL(started()), m_pKinectThread, SLOT(process()));
+		connect(m_pKinectThread, SIGNAL(finished()), m_pThread, SLOT(quit()));
+		connect(m_pKinectThread, SIGNAL(finished()), m_pKinectThread, SLOT(deleteLater()));
+		connect(m_pThread, SIGNAL(finished()), m_pThread, SLOT(deleteLater()));
+		connect(m_pKinectThread, SIGNAL(EventSkeleton()), this, SLOT(EventSkeleton()));
+
+		connect(ui.record, SIGNAL(clicked()), m_pKinectSkeleton, SLOT(StartRecording()));
+
+		m_pThread->start();
 	}
-	m_bVideoStreamOpened = true;
-	m_pKinectVideo = new KinectVideo(this, ui.video, 640, 480);
-
-	m_hNextSkeletonEvent = CreateEvent(NULL, TRUE, FALSE, NULL);	
-	hr = NuiSkeletonTrackingEnable(m_hNextSkeletonEvent, 0);
-	if (FAILED(hr)) {
-		QMessageBox::warning(this, "Error", "Skeleton cannot be initialized.");
-		return;
-	}
-	m_bSkeletonTracking = true;
-	m_pKinectSkeleton = new KinectSkeleton(this, ui.skeleton, 320, 240);
-
-	m_pThread = new QThread;
-	m_pKinectThread = new KinectThread();
-
-	m_pKinectThread->VideoHandles(m_videoStream, m_hNextVideoFrameEvent);
-	m_pKinectThread->SkeletonHandles(m_hNextSkeletonEvent);
-
-	m_pKinectThread->moveToThread(m_pThread);
-
-	connect(m_pThread, SIGNAL(started()), m_pKinectThread, SLOT(process()));
-	connect(m_pKinectThread, SIGNAL(finished()), m_pThread, SLOT(quit()));
-	connect(m_pKinectThread, SIGNAL(finished()), m_pKinectThread, SLOT(deleteLater()));
-	connect(m_pThread, SIGNAL(finished()), m_pThread, SLOT(deleteLater()));
-	connect(m_pKinectThread, SIGNAL(EventFrameColor()), this, SLOT(EventFrameColor()));
-	connect(m_pKinectThread, SIGNAL(EventSkeleton()), this, SLOT(EventSkeleton()));
-
-	connect(ui.pushButton, SIGNAL(clicked()), m_pKinectSkeleton, SLOT(StartRecording()));
-
-	m_pThread->start();
 }
 
-void KinectMotionCapture::EventFrameColor()
+bool KinectMotionCapture::InitializeSkeletonTracking()
 {
-	const NUI_IMAGE_FRAME* image_frame = NULL;
-
-	HRESULT hr = NuiImageStreamGetNextFrame(m_videoStream, 0, &image_frame);
-		
-	if(FAILED(hr))
-	{
-		return;	
+	m_hNextSkeletonEvent = CreateEvent(NULL, TRUE, FALSE, NULL);	
+	HRESULT hr = NuiSkeletonTrackingEnable(m_hNextSkeletonEvent, 0);
+	if (FAILED(hr)) {
+		QMessageBox::warning(this, "Error", "Skeleton cannot be initialized.");
+		return false;
 	}
-
-	INuiFrameTexture* texture = image_frame->pFrameTexture;
-	NUI_LOCKED_RECT locked_rect;
-	texture->LockRect(0, &locked_rect, NULL, 0);
-
-	if(locked_rect.Pitch != 0)
-    {
-    	m_pKinectVideo->DrawVideo((const unsigned char*) locked_rect.pBits);
-    }
-
-    texture->UnlockRect(0);
-
-	NuiImageStreamReleaseFrame(m_videoStream, image_frame);
+	return true;
 }
 
 void KinectMotionCapture::EventSkeleton()
@@ -164,12 +140,8 @@ void KinectMotionCapture::EventSkeleton()
                 );
 
             m_pRenderTarget->DrawEllipse(ellipse, m_pBrushJointTracked);*/
-			m_pKinectSkeleton->Clear();
         }
     }
-
-	//Fermeture du fichier de sortie bvh
-	//m_pKinectSkeleton->getBVH().~KinectBVH();
 
     //UpdateTrackedSkeletons(SkeletonFrame);
 }

@@ -28,6 +28,7 @@ public:
 
 	void AddOffset(int, const Vector4 &);
 	void AddMotionFrame(const Matrix4 &);
+	void AddQuaternion(const Vector4 &);
 	void AddPosition(const Vector4 &);
 	void IncrementNbFrames();
 	bool CreateBVHFile(QString);
@@ -39,11 +40,14 @@ private:
 	Vector4 m_aOffsets[20];
 	vector<Vector4> m_vPositions;
 	vector<Matrix4> m_vMotionData;
+	vector<Vector4> m_vQuaternions;
 
 	int m_nbFrame;
 
 	void CreateSkeletonInformation();
 	void CreateMotionInformation();
+	Matrix4 ConvertMatrix(const Matrix4 &);
+	int *QuaternionToEulerAngles(const Vector4 &);
 };
 
 #endif // KINECTBVH_H

@@ -11,7 +11,6 @@
 #include <NuiImageCamera.h>
 
 #include "ui_kinectmotioncapture.h"
-#include "kinectvideo.h"
 #include "kinectthread.h"
 #include "kinectskeleton.h"
 
@@ -29,29 +28,26 @@ public:
 	void Initialize();
 
 public slots:
-	void EventFrameColor();
 	void EventSkeleton();
 
 private:
 	INuiSensor *m_pNuiSensor;
-	HANDLE m_hNextVideoFrameEvent;
     HANDLE m_hNextSkeletonEvent;
-	HANDLE m_videoStream;
 	HANDLE m_skeletonStream;
 
-	bool m_bVideoStreamOpened;
 	bool m_bSkeletonTracking;
 	DWORD m_LastSkeletonFoundTime;
     bool m_bScreenBlanked;
 
 	bool m_bRecording;
 
-	KinectVideo *m_pKinectVideo;
 	KinectSkeleton *m_pKinectSkeleton;
 	KinectThread *m_pKinectThread;
 	QThread* m_pThread;
 
 	Ui::KinectMotionCaptureClass ui;
+
+	bool InitializeSkeletonTracking();
 };
 
 #endif // KINECTMOTIONCAPTURE_H

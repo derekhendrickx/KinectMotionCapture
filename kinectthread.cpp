@@ -4,10 +4,7 @@
 
 KinectThread::KinectThread()
 {
-	m_hNextVideoFrameEvent = NULL;
-	m_videoStream = NULL;
 	m_hNextSkeletonEvent = NULL;
-	m_bRunning = false;
 }
 
 KinectThread::~KinectThread()
@@ -15,43 +12,70 @@ KinectThread::~KinectThread()
 
 }
 
-void KinectThread::Shutdown()
-{
-	m_bRunning = true;
-}
-
 void KinectThread::process()
 {
-	HANDLE events[2] = {m_hNextVideoFrameEvent, m_hNextSkeletonEvent};
-	int event_idx;
+	const int numEvents = 1;
+    HANDLE hEvents[numEvents] = {m_hNextSkeletonEvent};
+    int nEventIdx;
+    DWORD t;
 
-	while(!m_bRunning)
-	{
-		// [rad] Wait for events, (not necessarily all) and time out is 100 msec.
-		event_idx = WaitForMultipleObjects((sizeof(events) / sizeof(events[0])), events, FALSE, 100);
+    // Blank the skeleton display on startup
+    m_LastSkeletonFoundTime = 0;
 
-		// [rad] Process events.
-		if(0 == event_idx)
-		{
-			// [rad] We have a color frame ready, emit signal.
-			emit EventFrameColor();
-		}
-		else if(1 == event_idx)
-		{
-			// [rad] We have a depth frame ready, emit signal.
-			emit EventSkeleton();
-		}
+    // Main thread loop
+    bool continueProcessing = true;
+    while (continueProcessing)
+    {
+        //// Wait for any of the events to be signalled
+        //nEventIdx = WaitForMultipleObjects(numEvents, hEvents, FALSE, 100);
 
-		Sleep(15);
-	}
+        //// Timed out, continue
+        //if (nEventIdx == WAIT_TIMEOUT)
+        //{
+        //    continue;
+        //}
+
+        //// stop event was signalled 
+        //if (WAIT_OBJECT_0 == nEventIdx)
+        //{
+        //    continueProcessing = false;
+        //    break;
+        //}
+
+        // Wait for each object individually with a 0 timeout to make sure to
+        // process all signalled objects if multiple objects were signalled
+        // this loop iteration
+
+        // In situations where perfect correspondance between color/depth/skeleton
+        // is essential, a priority queue should be used to service the item
+        // which has been updated the longest ago
+        if (WAIT_OBJECT_0 == WaitForSingleObject(m_hNextSkeletonEvent, 0))
+        {
+            emit EventSkeleton();
+        }
+
+        // Once per second, display the depth FPS
+        /*t = timeGetTime();
+        if ( (t - m_LastDepthFPStime) > 1000 )
+        {
+            int fps = ((m_DepthFramesTotal - m_LastDepthFramesTotal) * 1000 + 500) / (t - m_LastDepthFPStime);
+            PostMessageW( m_hWnd, WM_USER_UPDATE_FPS, IDC_FPS, fps );
+            m_LastDepthFramesTotal = m_DepthFramesTotal;
+            m_LastDepthFPStime = t;
+        }*/
+
+        // Blank the skeleton panel if we haven't found a skeleton recently
+        /*if ( (t - m_LastSkeletonFoundTime) > 300 )
+        {
+            if ( !m_bScreenBlanked )
+            {
+                Nui_BlankSkeletonScreen( );
+                m_bScreenBlanked = true;
+            }
+        }*/
+    }
 
 	emit finished();
-}
-
-void KinectThread::VideoHandles(HANDLE stream, HANDLE frame)
-{
-	m_hNextVideoFrameEvent = frame;
-	m_videoStream = stream;
 }
 
 void KinectThread::SkeletonHandles(HANDLE frame)

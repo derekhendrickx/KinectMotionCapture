@@ -1,28 +1,28 @@
 #include "kinectskeleton.h"
 
 #include <QDebug>
-#include <cmath>
 
 #define PI 3.14159265
 
-KinectSkeleton::KinectSkeleton(QWidget *parent, QLabel *label, int width, int height)
+KinectSkeleton::KinectSkeleton(QWidget *parent, QGraphicsView *graphicsView)
 	: QWidget(parent)
 {
-	m_pLabel = label;
-	m_iWidth = width;
-	m_iHeight = height;
-	m_pPixmap = new QPixmap(m_iWidth, m_iHeight);
-	m_pPixmap->fill(Qt::black);
-	m_pPainter = new QPainter(m_pPixmap);
+	m_pGraphicsView = graphicsView;
+	m_pGraphicsScene = new QGraphicsScene(this);
+	m_pGraphicsView->setScene(m_pGraphicsScene);
 	m_bRecording = false;
 	m_bIsCalibrated = false;
 	m_pKinectBVH = new KinectBVH();
+	m_iWidth = 640;
+	m_iHeight = 480;
 }
 
 KinectSkeleton::~KinectSkeleton()
 {
-	delete m_pPainter;
-	delete m_pPixmap;
+	delete m_pGraphicsView;
+	m_pGraphicsView = NULL;
+	delete m_pGraphicsScene;
+	m_pGraphicsScene = NULL;
 }
 
 void KinectSkeleton::StartRecording()
@@ -60,7 +60,8 @@ QPointF KinectSkeleton::SkeletonToScreen(Vector4 skeletonPoint, int width, int h
     float screenPointX = static_cast<float>(x * width) / m_iWidth;
     float screenPointY = static_cast<float>(y * height) / m_iHeight;
 
-    return QPoint(screenPointX, screenPointY);
+	//return m_pGraphicsView->mapFromScene(QPoint (x, y));
+	return QPoint (x, y);
 }
 
 void KinectSkeleton::DrawBone(const NUI_SKELETON_DATA &skel, NUI_SKELETON_POSITION_INDEX bone0, NUI_SKELETON_POSITION_INDEX bone1)
@@ -87,34 +88,46 @@ void KinectSkeleton::DrawBone(const NUI_SKELETON_DATA &skel, NUI_SKELETON_POSITI
     if ( bone0State == NUI_SKELETON_POSITION_TRACKED && bone1State == NUI_SKELETON_POSITION_TRACKED )
     {
 		pen.setBrush(Qt::green);
-		m_pPainter->setPen(pen);
-		m_pPainter->drawLine(m_Points[bone0], m_Points[bone1]);
+		m_pGraphicsScene->addLine(m_Points[bone0].x(), m_Points[bone0].y(), m_Points[bone1].x(), m_Points[bone1].y(), pen);
     }
     else
     {
 		pen.setBrush(Qt::red);
-		m_pPainter->setPen(pen);
-        m_pPainter->drawLine(m_Points[bone0], m_Points[bone1]);
+        m_pGraphicsScene->addLine(m_Points[bone0].x(), m_Points[bone0].y(), m_Points[bone1].x(), m_Points[bone1].y(), pen);
     }
 }
 
 void KinectSkeleton::DrawSkeleton(const NUI_SKELETON_DATA &skel, int windowWidth, int windowHeight)
 {
-	Clear();
+	m_pGraphicsScene->clear();
+	/*m_pGraphicsScene = new QGraphicsScene(this);
+	m_pGraphicsView->setScene(m_pGraphicsScene);*/
+
+	/*QBrush brush(Qt::blue);
+	QPen pen;
+	m_pGraphicsScene->addRect(50, 50, 50, 50, pen, brush);
+
+	NUI_SKELETON_BONE_ORIENTATION boneOrientations[NUI_SKELETON_POSITION_COUNT];
+	NuiSkeletonCalculateBoneOrientations(&skel, boneOrientations);
+	Matrix4 transform = boneOrientations[NUI_SKELETON_POSITION_HAND_RIGHT].absoluteRotation.rotationMatrix;
+
+	QTransform rotation = QTransform(transform.M11, transform.M12, transform.M13, transform.M21, transform.M22, transform.M23, transform.M31, transform.M32, transform.M33);
+	m_pGraphicsView->setTransform(rotation, true);*/
 
     int i;
 
 	for (i = 0; i < NUI_SKELETON_POSITION_COUNT; i++)
 	{
-		m_Points[i] = SkeletonToScreen(skel.SkeletonPositions[i], windowWidth, windowHeight);
+		m_Points[i] = SkeletonToScreen(skel.SkeletonPositions[i], m_pGraphicsView->width(), m_pGraphicsView->height());
 
 		if(IsRecording() == true && IsCalibrated() == TRUE) {
 			NUI_SKELETON_BONE_ORIENTATION boneOrientations[NUI_SKELETON_POSITION_COUNT];
 			NuiSkeletonCalculateBoneOrientations(&skel, boneOrientations);
 
 			m_pKinectBVH->AddPosition(skel.SkeletonPositions[NUI_SKELETON_POSITION_HIP_CENTER]);
-			for(int j = 0; j < NUI_SKELETON_POSITION_COUNT; j++){
+			for (int j = 0; j < NUI_SKELETON_POSITION_COUNT; j++) {
 				m_pKinectBVH->AddMotionFrame(boneOrientations[j].hierarchicalRotation.rotationMatrix);
+				//m_pKinectBVH->AddQuaternion(boneOrientations[j].hierarchicalRotation.rotationQuaternion);
 			}
 			m_pKinectBVH->IncrementNbFrames();
 		}
@@ -152,30 +165,16 @@ void KinectSkeleton::DrawSkeleton(const NUI_SKELETON_DATA &skel, int windowWidth
     // Draw the joints in a different color
     for (i = 0; i < NUI_SKELETON_POSITION_COUNT; i++)
     {
+		QBrush brush(Qt::blue);
 		QPen pen;
 		pen.setWidth(3);
-		pen.setBrush(Qt::blue);
-		m_pPainter->setPen(pen);
         if (skel.eSkeletonPositionTrackingState[i] == NUI_SKELETON_POSITION_INFERRED)
         {
-			m_pPainter->drawEllipse(m_Points[i], g_JointThickness, g_JointThickness);
+			m_pGraphicsScene->addEllipse(m_Points[i].x(), m_Points[i].y(), g_JointThickness, g_JointThickness, pen, brush);
         }
         else if (skel.eSkeletonPositionTrackingState[i] == NUI_SKELETON_POSITION_TRACKED)
         {
-            m_pPainter->drawEllipse(m_Points[i], g_JointThickness, g_JointThickness);
+            m_pGraphicsScene->addEllipse(m_Points[i].x(), m_Points[i].y(), g_JointThickness, g_JointThickness, pen, brush);
         }
     }
-
-	update();
-}
-
-void KinectSkeleton::Clear()
-{
-	m_pPainter->eraseRect(0, 0, m_iWidth, m_iHeight);
-	m_pPixmap->fill(Qt::black);
-}
-
-void KinectSkeleton::paintEvent(QPaintEvent *e)
-{
-	m_pLabel->setPixmap(*m_pPixmap);
 }

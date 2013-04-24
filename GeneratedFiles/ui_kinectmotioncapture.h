@@ -13,12 +13,10 @@
 #include <QtWidgets/QAction>
 #include <QtWidgets/QApplication>
 #include <QtWidgets/QButtonGroup>
-#include <QtWidgets/QHBoxLayout>
+#include <QtWidgets/QGraphicsView>
 #include <QtWidgets/QHeaderView>
-#include <QtWidgets/QLabel>
 #include <QtWidgets/QMainWindow>
 #include <QtWidgets/QPushButton>
-#include <QtWidgets/QStatusBar>
 #include <QtWidgets/QVBoxLayout>
 #include <QtWidgets/QWidget>
 
@@ -28,13 +26,9 @@ class Ui_KinectMotionCaptureClass
 {
 public:
     QWidget *centralWidget;
-    QWidget *verticalLayoutWidget;
     QVBoxLayout *verticalLayout;
-    QHBoxLayout *horizontalLayout;
-    QLabel *video;
-    QLabel *skeleton;
-    QPushButton *pushButton;
-    QStatusBar *statusBar;
+    QPushButton *record;
+    QGraphicsView *skeleton;
 
     void setupUi(QMainWindow *KinectMotionCaptureClass)
     {
@@ -43,43 +37,24 @@ public:
         KinectMotionCaptureClass->resize(768, 528);
         centralWidget = new QWidget(KinectMotionCaptureClass);
         centralWidget->setObjectName(QStringLiteral("centralWidget"));
-        verticalLayoutWidget = new QWidget(centralWidget);
-        verticalLayoutWidget->setObjectName(QStringLiteral("verticalLayoutWidget"));
-        verticalLayoutWidget->setGeometry(QRect(10, 10, 741, 484));
-        verticalLayout = new QVBoxLayout(verticalLayoutWidget);
+        verticalLayout = new QVBoxLayout(centralWidget);
         verticalLayout->setSpacing(6);
         verticalLayout->setContentsMargins(11, 11, 11, 11);
         verticalLayout->setObjectName(QStringLiteral("verticalLayout"));
-        verticalLayout->setContentsMargins(0, 0, 0, 0);
-        horizontalLayout = new QHBoxLayout();
-        horizontalLayout->setSpacing(6);
-        horizontalLayout->setObjectName(QStringLiteral("horizontalLayout"));
-        video = new QLabel(verticalLayoutWidget);
-        video->setObjectName(QStringLiteral("video"));
-        video->setMinimumSize(QSize(320, 240));
-        video->setMaximumSize(QSize(320, 240));
+        record = new QPushButton(centralWidget);
+        record->setObjectName(QStringLiteral("record"));
 
-        horizontalLayout->addWidget(video);
+        verticalLayout->addWidget(record);
 
-        skeleton = new QLabel(verticalLayoutWidget);
+        skeleton = new QGraphicsView(centralWidget);
         skeleton->setObjectName(QStringLiteral("skeleton"));
-        skeleton->setMinimumSize(QSize(320, 240));
-        skeleton->setMaximumSize(QSize(320, 240));
+        QBrush brush(QColor(0, 0, 0, 255));
+        brush.setStyle(Qt::SolidPattern);
+        skeleton->setBackgroundBrush(brush);
 
-        horizontalLayout->addWidget(skeleton);
-
-
-        verticalLayout->addLayout(horizontalLayout);
-
-        pushButton = new QPushButton(verticalLayoutWidget);
-        pushButton->setObjectName(QStringLiteral("pushButton"));
-
-        verticalLayout->addWidget(pushButton);
+        verticalLayout->addWidget(skeleton);
 
         KinectMotionCaptureClass->setCentralWidget(centralWidget);
-        statusBar = new QStatusBar(KinectMotionCaptureClass);
-        statusBar->setObjectName(QStringLiteral("statusBar"));
-        KinectMotionCaptureClass->setStatusBar(statusBar);
 
         retranslateUi(KinectMotionCaptureClass);
 
@@ -89,9 +64,7 @@ public:
     void retranslateUi(QMainWindow *KinectMotionCaptureClass)
     {
         KinectMotionCaptureClass->setWindowTitle(QApplication::translate("KinectMotionCaptureClass", "Kinect Motion Capture", 0));
-        video->setText(QString());
-        skeleton->setText(QString());
-        pushButton->setText(QApplication::translate("KinectMotionCaptureClass", "Record", 0));
+        record->setText(QApplication::translate("KinectMotionCaptureClass", "Record", 0));
     } // retranslateUi
 
 };

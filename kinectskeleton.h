@@ -1,14 +1,18 @@
 #ifndef KINECTSKELETON_H
 #define KINECTSKELETON_H
 
+#define SCALE 100
+
 #include <QWidget>
-#include <QLabel>
-#include <QPixmap>
-#include <QPainter>
+#include <QGraphicsView>
+#include <QGraphicsScene>
+#include <QTransform>
 
 #include <windows.h>
 #include <NuiApi.h>
+#include <cmath>
 
+#include "ui_kinectmotioncapture.h"
 #include "kinectbvh.h"
 
 static const qreal g_JointThickness = 3.0f;
@@ -18,7 +22,7 @@ class KinectSkeleton : public QWidget
 	Q_OBJECT
 
 public:
-	KinectSkeleton(QWidget *parent, QLabel *, int, int);
+	KinectSkeleton(QWidget *, QGraphicsView*);
 	~KinectSkeleton();
 
 	inline bool IsRecording() { return m_bRecording; };
@@ -26,7 +30,6 @@ public:
 	inline KinectBVH* getBVH() { return m_pKinectBVH; };
 
 	void DrawSkeleton(const NUI_SKELETON_DATA &, int, int);
-	void Clear();
 
 	void CalibrateSkeleton(const NUI_SKELETON_DATA &);
 
@@ -40,9 +43,8 @@ private:
 	bool m_bRecording;
 	bool m_bIsCalibrated;
 
-	QLabel *m_pLabel;
-	QPixmap *m_pPixmap;
-	QPainter *m_pPainter;
+	QGraphicsView *m_pGraphicsView;
+	QGraphicsScene *m_pGraphicsScene;
 	QPointF m_Points[NUI_SKELETON_POSITION_COUNT];
 
 	KinectBVH *m_pKinectBVH;
@@ -50,7 +52,6 @@ private:
 	QPointF SkeletonToScreen(Vector4, int, int);
 	void DrawBone(const NUI_SKELETON_DATA &, NUI_SKELETON_POSITION_INDEX, NUI_SKELETON_POSITION_INDEX);
 	void drawJointure();
-	void paintEvent(QPaintEvent *);
 };
 
 #endif // KINECTSKELETON_H

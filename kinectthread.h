@@ -16,7 +16,6 @@ public:
 
 	void Shutdown();
 
-	void VideoHandles(HANDLE stream, HANDLE frame);
 	void SkeletonHandles(HANDLE frame);
 
 public slots:
@@ -24,15 +23,11 @@ public slots:
 
 signals:
 	void finished();
-	void EventFrameColor();
 	void EventSkeleton();
 
 private:
-	HANDLE m_hNextVideoFrameEvent;
-	HANDLE m_videoStream;
 	HANDLE m_hNextSkeletonEvent;
-
-	bool m_bRunning;
+	DWORD m_LastSkeletonFoundTime;
 };
 
 #endif // KINECTTHREAD_H
