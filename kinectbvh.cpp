@@ -253,11 +253,11 @@ void KinectBVH::CreateMotionInformation()
 			m_vMotionData[j].M31 = -m_vMotionData[j].M31;
 			m_vMotionData[j].M32 = -m_vMotionData[j].M32;*/
 
-			rotX = asin(-m_vMotionData[j].M23);
+			rotX = asin(-m_vMotionData[j].M32);
 			rotX = (rotX * 180) / PI;
-			rotY = atan2(m_vMotionData[j].M13 / cos(rotX), m_vMotionData[j].M33 / cos(rotX));
+			rotY = atan2(-m_vMotionData[j].M31, m_vMotionData[j].M33);
 			rotY = (rotY * 180) / PI;
-			rotZ = atan2(m_vMotionData[j].M21 / cos(rotX), m_vMotionData[j].M22 / cos(rotX));
+			rotZ = atan2(-m_vMotionData[j].M12, m_vMotionData[j].M22);
 			rotZ = (rotZ * 180) / PI;
 			flux << rotZ << " " << rotX << " " << rotY << " ";
 		}
