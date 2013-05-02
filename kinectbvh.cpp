@@ -214,7 +214,12 @@ void KinectBVH::IncrementNbFrames()
 
 void KinectBVH::AddMotionFrame(const Matrix4 &rotationMatrix)
 {
-	m_vMotionData.push_back(rotationMatrix);
+	Matrix3f matrix;
+	matrix << rotationMatrix.M11, rotationMatrix.M12, rotationMatrix.M13,
+				rotationMatrix.M21, rotationMatrix.M22, rotationMatrix.M23,
+				rotationMatrix.M31, rotationMatrix.M32, rotationMatrix.M33;
+	Vector3f angles = matrix.eulerAngles(0, 1, 2);
+	m_vMotionData.push_back(angles);
 }
 
 void KinectBVH::AddQuaternion(const Vector4 &quaternion)
@@ -246,25 +251,8 @@ void KinectBVH::CreateMotionInformation()
 	for (int i = 0; i < m_vPositions.size(); i++) {
 		flux << "" << m_vPositions[i].x << " " << m_vPositions[i].y << " " << m_vPositions[i].z << " ";
 		for(int j = i * NUI_SKELETON_POSITION_COUNT; j < (i * NUI_SKELETON_POSITION_COUNT) + NUI_SKELETON_POSITION_COUNT; j++) {
-			// Convertion left handed to right handed
-			/*Matrix4 zxy = ConvertMatrix(m_vMotionData[j]);
-			m_vMotionData[j].M13 = -m_vMotionData[j].M13;
-			m_vMotionData[j].M23 = -m_vMotionData[j].M23;
-			m_vMotionData[j].M31 = -m_vMotionData[j].M31;
-			m_vMotionData[j].M32 = -m_vMotionData[j].M32;*/
-
-			rotX = asin(-m_vMotionData[j].M32);
-			rotX = (rotX * 180) / PI;
-			rotY = atan2(-m_vMotionData[j].M31, m_vMotionData[j].M33);
-			rotY = (rotY * 180) / PI;
-			rotZ = atan2(-m_vMotionData[j].M12, m_vMotionData[j].M22);
-			rotZ = (rotZ * 180) / PI;
-			flux << rotZ << " " << rotX << " " << rotY << " ";
+			flux << m_vMotionData[j].z() << " " << m_vMotionData[j].x() << " " << m_vMotionData[j].y() << " ";
 		}
-		/*for (int j = i * NUI_SKELETON_POSITION_COUNT; j < (i * NUI_SKELETON_POSITION_COUNT) + NUI_SKELETON_POSITION_COUNT; j++) {
-			int *euleurAngles = QuaternionToEulerAngles(m_vQuaternions[j]);
-			flux << euleurAngles[2] << " " << euleurAngles[0] << " " << euleurAngles[1] << " ";
-		}*/
 		flux << endl;
 	}
 

@@ -14,8 +14,10 @@
 #include <NuiApi.h>
 #include <vector>
 #include <map>
+#include <Eigen>
 
 using namespace std;
+using namespace Eigen;
 
 class KinectBVH : public QObject
 {
@@ -39,7 +41,8 @@ private:
 
 	Vector4 m_aOffsets[20];
 	vector<Vector4> m_vPositions;
-	vector<Matrix4> m_vMotionData;
+	//vector<Matrix4> m_vMotionData;
+	vector<Eigen::Vector3f,Eigen::aligned_allocator<Eigen::Vector3f>> m_vMotionData;
 	vector<Vector4> m_vQuaternions;
 
 	int m_nbFrame;

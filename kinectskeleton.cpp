@@ -126,53 +126,10 @@ void KinectSkeleton::DrawSkeleton(const NUI_SKELETON_DATA &skel, int windowWidth
 
 			m_pKinectBVH->AddPosition(skel.SkeletonPositions[NUI_SKELETON_POSITION_HIP_CENTER]);
 
-			// Matrices Multiplication
-			Matrix4 hipCenter = boneOrientations[NUI_SKELETON_POSITION_SPINE].absoluteRotation.rotationMatrix;
-			Matrix4 spine = boneOrientations[NUI_SKELETON_POSITION_SPINE].absoluteRotation.rotationMatrix * hipCenter;
-			Matrix4 shoulderCenter = boneOrientations[NUI_SKELETON_POSITION_SHOULDER_CENTER].absoluteRotation.rotationMatrix * spine;
-			Matrix4 head = boneOrientations[NUI_SKELETON_POSITION_HEAD].absoluteRotation.rotationMatrix * shoulderCenter;
-			Matrix4 shoulderLeft = boneOrientations[NUI_SKELETON_POSITION_SHOULDER_LEFT].absoluteRotation.rotationMatrix * shoulderCenter;
-			Matrix4 elbowLeft = boneOrientations[NUI_SKELETON_POSITION_ELBOW_LEFT].absoluteRotation.rotationMatrix * shoulderLeft;
-			Matrix4 wristLeft = boneOrientations[NUI_SKELETON_POSITION_WRIST_LEFT].absoluteRotation.rotationMatrix * elbowLeft;
-			Matrix4 handLeft = boneOrientations[NUI_SKELETON_POSITION_WRIST_LEFT].absoluteRotation.rotationMatrix * wristLeft;
-			Matrix4 shoulderRight = boneOrientations[NUI_SKELETON_POSITION_SHOULDER_RIGHT].absoluteRotation.rotationMatrix * shoulderCenter;
-			Matrix4 elbowRight = boneOrientations[NUI_SKELETON_POSITION_ELBOW_RIGHT].absoluteRotation.rotationMatrix * shoulderRight;
-			Matrix4 wristRight = boneOrientations[NUI_SKELETON_POSITION_WRIST_RIGHT].absoluteRotation.rotationMatrix * elbowRight;
-			Matrix4 handRight = boneOrientations[NUI_SKELETON_POSITION_WRIST_RIGHT].absoluteRotation.rotationMatrix * wristRight;
-			Matrix4 hipLeft = boneOrientations[NUI_SKELETON_POSITION_HIP_LEFT].absoluteRotation.rotationMatrix * hipCenter;
-			Matrix4 kneeLeft = boneOrientations[NUI_SKELETON_POSITION_KNEE_LEFT].absoluteRotation.rotationMatrix * hipLeft;
-			Matrix4 ankleLeft = boneOrientations[NUI_SKELETON_POSITION_ANKLE_LEFT].absoluteRotation.rotationMatrix * kneeLeft;
-			Matrix4 footLeft = boneOrientations[NUI_SKELETON_POSITION_FOOT_LEFT].absoluteRotation.rotationMatrix * ankleLeft;
-			Matrix4 hipRight = boneOrientations[NUI_SKELETON_POSITION_HIP_RIGHT].absoluteRotation.rotationMatrix * hipCenter;
-			Matrix4 kneeRight = boneOrientations[NUI_SKELETON_POSITION_KNEE_RIGHT].absoluteRotation.rotationMatrix * hipRight;
-			Matrix4 ankleRight = boneOrientations[NUI_SKELETON_POSITION_ANKLE_RIGHT].absoluteRotation.rotationMatrix * kneeRight;
-			Matrix4 footRight = boneOrientations[NUI_SKELETON_POSITION_FOOT_RIGHT].absoluteRotation.rotationMatrix * ankleRight;
-
-			m_pKinectBVH->AddMotionFrame(hipCenter);
-			m_pKinectBVH->AddMotionFrame(spine);
-			m_pKinectBVH->AddMotionFrame(shoulderCenter);
-			m_pKinectBVH->AddMotionFrame(head);
-			m_pKinectBVH->AddMotionFrame(shoulderLeft);
-			m_pKinectBVH->AddMotionFrame(elbowLeft);
-			m_pKinectBVH->AddMotionFrame(wristLeft);
-			m_pKinectBVH->AddMotionFrame(handLeft);
-			m_pKinectBVH->AddMotionFrame(shoulderRight);
-			m_pKinectBVH->AddMotionFrame(elbowRight);
-			m_pKinectBVH->AddMotionFrame(wristRight);
-			m_pKinectBVH->AddMotionFrame(handRight);
-			m_pKinectBVH->AddMotionFrame(hipLeft);
-			m_pKinectBVH->AddMotionFrame(kneeLeft);
-			m_pKinectBVH->AddMotionFrame(ankleLeft);
-			m_pKinectBVH->AddMotionFrame(footLeft);
-			m_pKinectBVH->AddMotionFrame(hipRight);
-			m_pKinectBVH->AddMotionFrame(kneeRight);
-			m_pKinectBVH->AddMotionFrame(ankleRight);
-			m_pKinectBVH->AddMotionFrame(footRight);
-
-			//for (int j = 0; j < NUI_SKELETON_POSITION_COUNT; j++) {
-			//	m_pKinectBVH->AddMotionFrame(boneOrientations[j].absoluteRotation.rotationMatrix);
-			//	//m_pKinectBVH->AddQuaternion(boneOrientations[j].hierarchicalRotation.rotationQuaternion);
-			//}
+			for (int j = 0; j < NUI_SKELETON_POSITION_COUNT; j++) {
+				m_pKinectBVH->AddMotionFrame(boneOrientations[j].hierarchicalRotation.rotationMatrix);
+				//m_pKinectBVH->AddQuaternion(boneOrientations[j].hierarchicalRotation.rotationQuaternion);
+			}
 			m_pKinectBVH->IncrementNbFrames();
 		}
 	}
