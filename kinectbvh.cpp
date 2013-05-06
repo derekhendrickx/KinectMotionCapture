@@ -218,7 +218,7 @@ void KinectBVH::AddMotionFrame(const Matrix4 &rotationMatrix)
 	matrix << rotationMatrix.M11, rotationMatrix.M12, rotationMatrix.M13,
 				rotationMatrix.M21, rotationMatrix.M22, rotationMatrix.M23,
 				rotationMatrix.M31, rotationMatrix.M32, rotationMatrix.M33;
-	Vector3f angles = matrix.eulerAngles(0, 1, 2);
+	Vector3f angles = matrix.eulerAngles(0, 2, 1);
 	m_vMotionData.push_back(angles);
 }
 
