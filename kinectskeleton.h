@@ -11,6 +11,7 @@
 #include <windows.h>
 #include <NuiApi.h>
 #include <cmath>
+#include <Eigen>
 
 #include "ui_kinectmotioncapture.h"
 #include "kinectbvh.h"
@@ -52,6 +53,7 @@ private:
 	QPointF SkeletonToScreen(Vector4, int, int);
 	void DrawBone(const NUI_SKELETON_DATA &, NUI_SKELETON_POSITION_INDEX, NUI_SKELETON_POSITION_INDEX);
 	void drawJointure();
+	void ProcessBonesOrientation(const NUI_SKELETON_DATA &);
 };
 
 #endif // KINECTSKELETON_H

@@ -19,6 +19,15 @@
 using namespace std;
 using namespace Eigen;
 
+struct KinectNode
+{
+	struct KinectNode *parent;
+	struct KinectNode *sons;
+	Matrix3f transform;
+	Matrix3f inverseTransform;
+	Matrix3f localTransform;
+};
+
 class KinectBVH : public QObject
 {
 	Q_OBJECT
@@ -29,6 +38,7 @@ public:
 	~KinectBVH();
 
 	void AddOffset(int, const Vector4 &);
+	void AddBonesOrientation(KinectNode *);
 	void AddMotionFrame(const Matrix4 &);
 	void AddQuaternion(const Vector4 &);
 	void AddPosition(const Vector4 &);
@@ -41,7 +51,7 @@ private:
 
 	Vector4 m_aOffsets[20];
 	vector<Vector4> m_vPositions;
-	//vector<Matrix4> m_vMotionData;
+	vector<KinectNode*> m_vBonesOrientation;
 	vector<Eigen::Vector3f,Eigen::aligned_allocator<Eigen::Vector3f>> m_vMotionData;
 	vector<Vector4> m_vQuaternions;
 
@@ -49,7 +59,6 @@ private:
 
 	void CreateSkeletonInformation();
 	void CreateMotionInformation();
-	Matrix4 ConvertMatrix(const Matrix4 &);
 	int *QuaternionToEulerAngles(const Vector4 &);
 };
 

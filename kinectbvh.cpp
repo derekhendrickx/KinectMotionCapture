@@ -212,6 +212,11 @@ void KinectBVH::IncrementNbFrames()
 	++m_nbFrame;
 }
 
+void KinectBVH::AddBonesOrientation(KinectNode *joints)
+{
+	m_vBonesOrientation.push_back(joints);
+}
+
 void KinectBVH::AddMotionFrame(const Matrix4 &rotationMatrix)
 {
 	Matrix3f matrix;
@@ -250,36 +255,17 @@ void KinectBVH::CreateMotionInformation()
 
 	for (int i = 0; i < m_vPositions.size(); i++) {
 		flux << "" << m_vPositions[i].x << " " << m_vPositions[i].y << " " << m_vPositions[i].z << " ";
-		for(int j = i * NUI_SKELETON_POSITION_COUNT; j < (i * NUI_SKELETON_POSITION_COUNT) + NUI_SKELETON_POSITION_COUNT; j++) {
-			flux << m_vMotionData[j].z() << " " << m_vMotionData[j].x() << " " << m_vMotionData[j].y() << " ";
+		KinectNode *joints = m_vBonesOrientation[i];
+		for(int j = 0; j < NUI_SKELETON_POSITION_COUNT; j++) {
+			Matrix3f matrix = joints[j].localTransform;
+			Vector3f angles = matrix.eulerAngles(2, 0, 1);
+			flux << angles.z() << " " << angles.x() << " " << angles.y() << " ";
 		}
 		flux << endl;
 	}
 
 	m_vPositions.clear();
 	m_vMotionData.clear();
-}
-
-Matrix4 KinectBVH::ConvertMatrix(const Matrix4 &xyz)
-{
-	Matrix4 zxy;
-
-	// x -> z
-	zxy.M11 = xyz.M13;
-	zxy.M21 = xyz.M23;
-	zxy.M31 = xyz.M33;
-
-	// y -> x
-	zxy.M12 = xyz.M11;
-	zxy.M22 = xyz.M21;
-	zxy.M32 = xyz.M31;
-
-	// z - > y
-	zxy.M13 = xyz.M12;
-	zxy.M23 = xyz.M22;
-	zxy.M33 = xyz.M32;
-
-	return zxy;
 }
 
 int *KinectBVH::QuaternionToEulerAngles(const Vector4 &quaternion)
@@ -305,8 +291,8 @@ int *KinectBVH::QuaternionToEulerAngles(const Vector4 &quaternion)
 		eulerAngles[2] = 0;
 		return eulerAngles;
 	}
-	eulerAngles[0] = atan2(2 * quaternion.y * (quaternion.w - 2) * quaternion.x * quaternion.z, sqx - sqy - sqz + sqw);
-	eulerAngles[1] = asin(2 * test / unit);
-	eulerAngles[2] = atan2(2 * quaternion.x * (quaternion.w - 2) * quaternion.y * quaternion.z, -sqx + sqy - sqz + sqw);
+	eulerAngles[0] = atan2(2 * (quaternion.w * quaternion.z + quaternion.x * quaternion.y), 1 - 2 * (sqy + sqz));
+	eulerAngles[1] = asin(2 * (quaternion.w * quaternion.y - quaternion.z * quaternion.x));
+	eulerAngles[2] = atan2(2 * (quaternion.w * quaternion.x + quaternion.y * quaternion.z), 1 - 2 * (sqx + sqy));
 	return eulerAngles;
 }
