@@ -7,6 +7,9 @@
 
 using namespace std;
 
+/**
+* Constructeur
+*/
 KinectMotionCapture::KinectMotionCapture(QWidget *parent)
 	: QMainWindow(parent)
 {
@@ -18,6 +21,9 @@ KinectMotionCapture::KinectMotionCapture(QWidget *parent)
 	m_bRecording = false;
 }
 
+/**
+* Destructeur
+*/
 KinectMotionCapture::~KinectMotionCapture()
 {
 	if (m_pNuiSensor)
@@ -29,13 +35,15 @@ KinectMotionCapture::~KinectMotionCapture()
 		CloseHandle(m_hNextSkeletonEvent);
 		m_hNextSkeletonEvent = NULL;
 	}
-	//SafeRelease(m_pNuiSensor);
 
 	delete m_pKinectSkeleton;
 	delete m_pKinectThread;
 	delete m_pThread;
 }
 
+/**
+* Initalise la Kinect
+*/
 void KinectMotionCapture::Initialize()
 {
 	HRESULT hr = NuiInitialize(NUI_INITIALIZE_FLAG_USES_COLOR | NUI_INITIALIZE_FLAG_USES_DEPTH_AND_PLAYER_INDEX | NUI_INITIALIZE_FLAG_USES_SKELETON);
@@ -48,17 +56,18 @@ void KinectMotionCapture::Initialize()
 	if (m_bSkeletonTracking) {
 		m_pKinectSkeleton = new KinectSkeleton(this, ui.skeleton);
 
+		// Initialisation du Thread
 		m_pThread = new QThread;
 		m_pKinectThread = new KinectThread();
 		m_pKinectThread->SkeletonHandles(m_hNextSkeletonEvent);
 		m_pKinectThread->moveToThread(m_pThread);
 
+		// Mise en place des fonctionnalités du Thread
 		connect(m_pThread, SIGNAL(started()), m_pKinectThread, SLOT(process()));
 		connect(m_pKinectThread, SIGNAL(finished()), m_pThread, SLOT(quit()));
 		connect(m_pKinectThread, SIGNAL(finished()), m_pKinectThread, SLOT(deleteLater()));
 		connect(m_pThread, SIGNAL(finished()), m_pThread, SLOT(deleteLater()));
 		connect(m_pKinectThread, SIGNAL(EventSkeleton()), this, SLOT(EventSkeleton()));
-
 		connect(ui.record, SIGNAL(clicked()), m_pKinectSkeleton, SLOT(StartRecording()));
 
 		m_pThread->start();
@@ -76,6 +85,9 @@ bool KinectMotionCapture::InitializeSkeletonTracking()
 	return true;
 }
 
+/**
+* Traitement du nouveau squelette envoyé par le Kinect
+*/
 void KinectMotionCapture::EventSkeleton()
 {
 	NUI_SKELETON_FRAME SkeletonFrame = {0};
@@ -108,13 +120,7 @@ void KinectMotionCapture::EventSkeleton()
     }
 
     // we found a skeleton, re-start the skeletal timer
-    m_bScreenBlanked = false;
     m_LastSkeletonFoundTime = -1;
-    
-    //RECT rct;
-    //GetClientRect(GetDlgItem(m_hWnd, IDC_SKELETALVIEW), &rct);
-    //int width = rct.right;
-    //int height = rct.bottom;
 
     for (int i = 0 ; i < NUI_SKELETON_COUNT; i++)
     {
@@ -123,25 +129,12 @@ void KinectMotionCapture::EventSkeleton()
         if (trackingState == NUI_SKELETON_TRACKED)
         {
             // We're tracking the skeleton, draw it
-            m_pKinectSkeleton->DrawSkeleton(SkeletonFrame.SkeletonData[i], 320, 240);
+            m_pKinectSkeleton->DrawSkeleton(SkeletonFrame.SkeletonData[i]);
 
 			if (m_pKinectSkeleton->IsRecording() == true && m_pKinectSkeleton->IsCalibrated() == false)
 			{
 				m_pKinectSkeleton->CalibrateSkeleton(SkeletonFrame.SkeletonData[i]);
 			}
         }
-        else if (trackingState == NUI_SKELETON_POSITION_ONLY)
-        {
-            // we've only received the center point of the skeleton, draw that
-            /*D2D1_ELLIPSE ellipse = D2D1::Ellipse(
-                SkeletonToScreen(SkeletonFrame.SkeletonData[i].Position, width, height),
-                g_JointThickness,
-                g_JointThickness
-                );
-
-            m_pRenderTarget->DrawEllipse(ellipse, m_pBrushJointTracked);*/
-        }
     }
-
-    //UpdateTrackedSkeletons(SkeletonFrame);
 }

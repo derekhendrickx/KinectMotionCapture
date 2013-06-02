@@ -1,10 +1,16 @@
 #include "kinectbvh.h"
 
+/**
+* Constructeur
+*/
 KinectBVH::KinectBVH()
 {
 	m_nbFrame = 0;
 }
 
+/**
+* Destructeur
+*/
 KinectBVH::~KinectBVH()
 {
 	m_pFile->close();
@@ -12,6 +18,9 @@ KinectBVH::~KinectBVH()
 	m_pFile = NULL;
 }
 
+/**
+* Ajoute un offset à la description du BVH
+*/
 void KinectBVH::AddOffset(int i, const Vector4 &offset)
 {
 	m_aOffsets[i].x = -offset.x * SCALE;
@@ -19,6 +28,9 @@ void KinectBVH::AddOffset(int i, const Vector4 &offset)
 	m_aOffsets[i].z = offset.z * SCALE;
 }
 
+/**
+* Créé un nouveau fichier en fonction du nom reçu en paramètre, renvoi true si réussi sinon false
+*/
 bool KinectBVH::CreateBVHFile(QString filename)
 {
 	m_pFile = new QFile(filename);
@@ -28,6 +40,9 @@ bool KinectBVH::CreateBVHFile(QString filename)
 	return true;
 }
 
+/**
+* Génère le fichier BVH
+*/
 void KinectBVH::FillBVHFile()
 {
 	CreateSkeletonInformation();
@@ -37,6 +52,9 @@ void KinectBVH::FillBVHFile()
 	m_pFile = NULL;
 }
 
+/**
+* Génère la description du squelette pour le BVH
+*/
 void KinectBVH::CreateSkeletonInformation()
 {
 	QTextStream flux(m_pFile);
@@ -207,31 +225,25 @@ void KinectBVH::CreateSkeletonInformation()
 	flux << "}" << endl;
 }
 
+/**
+* Incrémente le nombre de frames
+*/
 void KinectBVH::IncrementNbFrames()
 {
 	++m_nbFrame;
 }
 
-void KinectBVH::AddBonesOrientation(KinectNode *joints)
+/**
+* Ajoute un squelette et ses informations pour les données de la capture de mouvements
+*/
+void KinectBVH::AddBonesOrientation(KinectJoint *joints)
 {
 	m_vBonesOrientation.push_back(joints);
 }
 
-void KinectBVH::AddMotionFrame(const Matrix4 &rotationMatrix)
-{
-	Matrix3f matrix;
-	matrix << rotationMatrix.M11, rotationMatrix.M12, rotationMatrix.M13,
-				rotationMatrix.M21, rotationMatrix.M22, rotationMatrix.M23,
-				rotationMatrix.M31, rotationMatrix.M32, rotationMatrix.M33;
-	Vector3f angles = matrix.eulerAngles(0, 2, 1);
-	m_vMotionData.push_back(angles);
-}
-
-void KinectBVH::AddQuaternion(const Vector4 &quaternion)
-{
-	m_vQuaternions.push_back(quaternion);
-}
-
+/**
+* Ajoute une position du joint Hip Center pour les données de la capture de mouvements
+*/
 void KinectBVH::AddPosition(const Vector4 &position)
 {
 	Vector4 pos;
@@ -242,10 +254,11 @@ void KinectBVH::AddPosition(const Vector4 &position)
 	m_vPositions.push_back(pos);
 }
 
+/**
+* Génère les données des mouvements pour le BVH
+*/
 void KinectBVH::CreateMotionInformation()
 {
-	// Euler angles: head (Y), pitch (X) & roll (Z)
-	float rotX, rotY, rotZ;
 	QTextStream flux(m_pFile);
 	flux.setCodec("utf-8");
 
@@ -254,20 +267,22 @@ void KinectBVH::CreateMotionInformation()
 	flux << "Frame Time: " << FPS << endl;
 
 	for (int i = 0; i < m_vPositions.size(); i++) {
-		flux << "" << m_vPositions[i].x << " " << m_vPositions[i].y << " " << m_vPositions[i].z << " ";
-		KinectNode *joints = m_vBonesOrientation[i];
+		flux << m_vPositions[i].x << " " << m_vPositions[i].y << " " << m_vPositions[i].z << " ";
+		KinectJoint *joints = m_vBonesOrientation[i];
 		for(int j = 0; j < NUI_SKELETON_POSITION_COUNT; j++) {
-			Matrix3f matrix = joints[j].localTransform;
-			Vector3f angles = matrix.eulerAngles(2, 0, 1);
+			Vector3f angles = joints[j].angles;
 			flux << angles.z() << " " << angles.x() << " " << angles.y() << " ";
 		}
 		flux << endl;
 	}
 
 	m_vPositions.clear();
-	m_vMotionData.clear();
+	m_vBonesOrientation.clear();
 }
 
+/**
+* Convertis un quaternion passé en paramètre en angles d'Euler, renvoi un tableau contenant les 3 angles
+*/
 int *KinectBVH::QuaternionToEulerAngles(const Vector4 &quaternion)
 {
 	static int eulerAngles[3] = {0, 0, 0};

@@ -1,6 +1,9 @@
 #include "kinectmotioncapture.h"
 #include <QtWidgets/QApplication>
 
+/**
+* Main exécutant l'IHM
+*/
 int main(int argc, char *argv[])
 {
 	QApplication a(argc, argv);
