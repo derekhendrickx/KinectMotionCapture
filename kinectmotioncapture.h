@@ -3,7 +3,6 @@
 
 #include <QtWidgets/QMainWindow>
 #include <QThread>
-#include <QDebug>
 
 #include <windows.h>
 #include <NuiApi.h>

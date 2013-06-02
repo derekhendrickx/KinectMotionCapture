@@ -6,7 +6,6 @@
 #include <QWidget>
 #include <QGraphicsView>
 #include <QGraphicsScene>
-#include <QTransform>
 
 #include <windows.h>
 #include <NuiApi.h>
